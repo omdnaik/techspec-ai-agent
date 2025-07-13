@@ -1,0 +1,19 @@
+{
+  "prompts": [
+    {
+      "name": "Generate Master Technical Spec",
+      "description": "Generate a complete technical spec from DI components, DB schema, and interface definitions.",
+      "prompt": "You are an expert systems architect. Using the provided interface schema, DI components, DB schema, and application config metadata, generate a Master Technical Specification for a confirmation/advice generation system.\n\nInclude the following sections:\n1. Overview\n2. Input Interfaces (API or MQ)\n3. Spring DI Component Architecture\n4. Database Schema Summary\n5. Transformation Flow Description\n6. Exception & Error Handling\n7. Deployment Architecture\n8. Configuration & External Dependencies\n9. Logging Strategy\n10. Application Configuration Tables\n\nBe concise but technical. Format the output as Markdown.\n\nFILES:\n- di_components.json\n- db_schema.json\n- config_metadata.json\n- api_schemas.json (if available)"
+    },
+    {
+      "name": "Generate Interface Schema",
+      "description": "Generate technical schema for all interfaces in the system.",
+      "prompt": "Given the input/output payloads used in the system (e.g., REST or message listener DTOs), generate a technical schema describing each field, its type, and purpose. Group by endpoint or listener.\n\nFILES:\n- api_schemas.json\n\nOutput format: Markdown table per interface."
+    },
+    {
+      "name": "Generate Transformation Trace",
+      "description": "Generate transformation trace between DTO and confirmation fields.",
+      "prompt": "Given the transformation mappings between transaction DTOs and confirmation message fields, generate a trace map of how data flows from source input to final output.\n\nFILES:\n- transformation_trace.json\n\nRepresent as a table: From Object → From Field → To Object → To Field"
+    }
+  ]
+}

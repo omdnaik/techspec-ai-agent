@@ -1,0 +1,10 @@
+{
+  "context": [
+    "output/di_components.json",
+    "output/db_schema.json",
+    "output/api_schemas.json",
+    "output/transformation_trace.json",
+    "output/config_metadata.json",
+    "output/master_techspec.md"
+  ]
+}
