@@ -8,6 +8,7 @@ import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
@@ -16,14 +17,17 @@ public class ConfigMetadataExtractor {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public List<Map<String, Object>> extract(File ddlFolder) throws IOException {
-        List<Map<String, Object>> output = new ArrayList<>();
+    public void extract(File ddlFolder, File outputFile) throws IOException {
+        List<Map<String, Object>> result = new ArrayList<>();
 
         for (File file : Objects.requireNonNull(ddlFolder.listFiles())) {
             String content = Files.readString(file.toPath());
-            List<String> ddlStatements = SqlDDLExtractor.extractCreateStatements(content);
 
-            for (String ddl : ddlStatements) {
+            // 🔹 Extract both regular and embedded CREATE TABLE DDLs
+            List<String> allCreateStatements = new ArrayList<>();
+            allCreateStatements.addAll(SqlDDLExtractor.extractCreateStatements(content));
+
+            for (String ddl : allCreateStatements) {
                 Statement stmt = safeParse(ddl);
                 if (stmt instanceof CreateTable createTable) {
                     String tableName = createTable.getTable().getName().toLowerCase();
@@ -38,28 +42,31 @@ public class ConfigMetadataExtractor {
                             colMap.put("type", column.getColDataType().toString());
                             columns.add(colMap);
                         }
+
                         tableMap.put("columns", columns);
-                        output.add(tableMap);
+                        result.add(tableMap);
                     }
                 }
             }
 
-            // Attach sample INSERTs
+            // 🔹 Append insert samples
             Map<String, List<String>> insertMap = SqlDDLExtractor.extractInsertSamples(content);
-            for (Map<String, Object> table : output) {
+            for (Map<String, Object> table : result) {
                 String name = (String) table.get("tableName");
                 table.put("sampleData", insertMap.getOrDefault(name.toLowerCase(), new ArrayList<>()));
             }
         }
 
-        return output;
+        try (FileWriter writer = new FileWriter(outputFile)) {
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(writer, result);
+        }
     }
 
     private Statement safeParse(String ddl) {
         try {
             return CCJSqlParserUtil.parse(ddl);
         } catch (Exception e) {
-            System.err.println("Failed to parse: " + ddl);
+            System.err.println("Failed to parse DDL: " + ddl);
             return null;
         }
     }
