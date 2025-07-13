@@ -14,6 +14,65 @@
       "name": "Generate Transformation Trace",
       "description": "Generate transformation trace between DTO and confirmation fields.",
       "prompt": "Given the transformation mappings between transaction DTOs and confirmation message fields, generate a trace map of how data flows from source input to final output.\n\nFILES:\n- transformation_trace.json\n\nRepresent as a table: From Object → From Field → To Object → To Field"
+    },
+    {
+      You are a senior Java developer and documentation specialist.
+
+Using the provided Java class and supporting context, generate professional-level JavaDocs for the class and all its public/protected methods.
+
+---
+
+CONTEXT (Input Sources):
+
+{{context}}
+
+The provided context may include:
+- DI metadata (e.g., @Service, @Component)
+- API schema metadata (input/output models)
+- DB schema and config tables
+- Transformation mappings between DTOs and XML/JSON output
+
+You must incorporate only relevant and **traceable** information from the above context into the documentation.
+
+---
+
+DOCUMENTATION REQUIREMENTS:
+
+1. **Class-Level JavaDoc**:
+   - Purpose of the class
+   - Functional responsibilities
+   - Related entities, endpoints, or configuration keys (if available in context)
+
+2. **Method-Level JavaDocs**:
+   - Purpose of each method
+   - Input parameter description (types and business meaning)
+   - Output/return description
+   - Exception or edge-case behavior
+   - References to DB/config/API elements from context, if applicable
+
+3. **Documentation Format**:
+   - Follow standard JavaDoc format (`/** */`)
+   - Use tags like `@param`, `@return`, `@throws` properly
+   - Include examples only if clearly available in the context
+
+---
+
+ANTI-HALLUCINATION GUARDRAILS:
+
+- ❌ Do **not** invent or assume use cases not traceable to the Java class or context
+- ❌ Do **not** fabricate field names, endpoints, or configuration properties
+- ✅ If any information is missing, state: _"Documentation not available due to missing context."_
+- ✅ Stick to factual, observable behavior from class + context
+- ❌ Do not generate implementation code or modify logic
+
+---
+
+OUTPUT:
+
+Return only the complete JavaDoc comments as plain text (no markdown). Structure:
+
+1. Class JavaDoc
+2. Method JavaDocs (in the order they appear)
     }
   ]
 }
