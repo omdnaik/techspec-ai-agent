@@ -1,83 +1,66 @@
-
 package com.techspec.agent.extractor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.techspec.agent.util.SqlDDLExtractor;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
+import net.sf.jsqlparser.statement.create.table.CreateTable;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ConfigMetadataExtractor {
 
-    public static void extractConfigMetadata(File sqlDir, File outputJsonFile) throws IOException {
-        List<Map<String, Object>> tableList = new ArrayList<>();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-        File[] files = sqlDir.listFiles((dir, name) -> name.endsWith(".sql"));
-        if (files == null) return;
+    public List<Map<String, Object>> extract(File ddlFolder) throws IOException {
+        List<Map<String, Object>> output = new ArrayList<>();
 
-        for (File file : files) {
+        for (File file : Objects.requireNonNull(ddlFolder.listFiles())) {
             String content = Files.readString(file.toPath());
+            List<String> ddlStatements = SqlDDLExtractor.extractCreateStatements(content);
 
-            // match CREATE TABLE statements
-            Pattern createTablePattern = Pattern.compile("(?i)create table (\\w+)\\s*\\((.*?)\\)\\s*;", Pattern.DOTALL);
-            Matcher createTableMatcher = createTablePattern.matcher(content);
+            for (String ddl : ddlStatements) {
+                Statement stmt = safeParse(ddl);
+                if (stmt instanceof CreateTable createTable) {
+                    String tableName = createTable.getTable().getName().toLowerCase();
+                    if (tableName.contains("config") || tableName.contains("detail")) {
+                        Map<String, Object> tableMap = new LinkedHashMap<>();
+                        tableMap.put("tableName", tableName);
 
-            while (createTableMatcher.find()) {
-                String tableName = createTableMatcher.group(1);
-                if (!(tableName.toLowerCase().contains("config") || tableName.toLowerCase().contains("details"))) {
-                    continue; // skip non-config/detail tables
-                }
-                String columnDefs = createTableMatcher.group(2);
-                List<Map<String, String>> columns = new ArrayList<>();
-
-                for (String line : columnDefs.split(",\\s*")) {
-                    String[] parts = line.trim().split("\\s+");
-                    if (parts.length >= 2) {
-                        Map<String, String> col = new LinkedHashMap<>();
-                        col.put("name", parts[0].replace("`", ""));
-                        col.put("type", parts[1].toUpperCase());
-                        columns.add(col);
-                    }
-                }
-
-                Map<String, Object> tableEntry = new LinkedHashMap<>();
-                tableEntry.put("tableName", tableName);
-                tableEntry.put("columns", columns);
-                tableEntry.put("sampleData", new ArrayList<String>());
-                tableEntry.put("sampleInserts", new ArrayList<String>());
-                tableList.add(tableEntry);
-            }
-        }
-
-        // match INSERT INTO values
-        for (File file : files) {
-            String content = Files.readString(file.toPath());
-            Pattern insertPattern = Pattern.compile("(?i)insert into (\\w+).*?values\\s*(\\(.*?\\))(?:;|$)", Pattern.DOTALL);
-            Matcher insertMatcher = insertPattern.matcher(content);
-
-            while (insertMatcher.find()) {
-                String table = insertMatcher.group(1);
-                if (!(table.toLowerCase().contains("config") || table.toLowerCase().contains("details"))) {
-                    continue; // skip non-config/detail inserts
-                }
-                String values = insertMatcher.group(2).trim();
-
-                for (Map<String, Object> tbl : tableList) {
-                    if (tbl.get("tableName").toString().equalsIgnoreCase(table)) {
-                        List<String> sampleData = (List<String>) tbl.get("sampleData");
-                        sampleData.add(values);
-
-                        List<String> sampleInserts = (List<String>) tbl.get("sampleInserts");
-                        sampleInserts.add(insertMatcher.group(0).trim());
+                        List<Map<String, String>> columns = new ArrayList<>();
+                        for (ColumnDefinition column : createTable.getColumnDefinitions()) {
+                            Map<String, String> colMap = new LinkedHashMap<>();
+                            colMap.put("name", column.getColumnName());
+                            colMap.put("type", column.getColDataType().toString());
+                            columns.add(colMap);
+                        }
+                        tableMap.put("columns", columns);
+                        output.add(tableMap);
                     }
                 }
             }
+
+            // Attach sample INSERTs
+            Map<String, List<String>> insertMap = SqlDDLExtractor.extractInsertSamples(content);
+            for (Map<String, Object> table : output) {
+                String name = (String) table.get("tableName");
+                table.put("sampleData", insertMap.getOrDefault(name.toLowerCase(), new ArrayList<>()));
+            }
         }
 
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.writerWithDefaultPrettyPrinter().writeValue(outputJsonFile, tableList);
+        return output;
+    }
+
+    private Statement safeParse(String ddl) {
+        try {
+            return CCJSqlParserUtil.parse(ddl);
+        } catch (Exception e) {
+            System.err.println("Failed to parse: " + ddl);
+            return null;
+        }
     }
 }
