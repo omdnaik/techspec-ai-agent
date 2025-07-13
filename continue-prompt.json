@@ -1,4 +1,4 @@
-{
+use{
   "prompts": [
     {
       "name": "Generate Master Technical Spec",
@@ -76,3 +76,34 @@ Return only the complete JavaDoc comments as plain text (no markdown). Structure
     }
   ]
 }
+
+---
+      OUTPUT:
+      Return only properly formatted JavaDoc blocks (`/** ... */`) as you would write in Java source code.
+
+      - Do NOT include markdown, bullets, or commentary.
+      - Return exactly one JavaDoc block for each method in the order it appears in the class.
+      - Start with a class-level JavaDoc placed above the class definition.
+
+      Example:
+
+      ```
+      /**
+       * Handles the execution of jobs with retry mechanism.
+       *
+       * <p>This class reads from the config table and runs tasks as per retry policy.
+       *
+       * @author ...
+       * @since ...
+       */
+      public class RetryJobExecutor { ... }
+
+      /**
+       * Executes the configured job with retry.
+       *
+       * @param jobName name of the job
+       * @param maxAttempts maximum number of attempts
+       * @return true if successful, false otherwise
+       */
+      public boolean executeWithRetry(String jobName, int maxAttempts) { ... }
+      ```
