@@ -1,0 +1,27 @@
+package com.techspec.agent.extractor.sql;
+
+import java.util.ArrayList; import java.util.List; import java.util.regex.Matcher; import java.util.regex.Pattern;
+
+public class SqlDDLExtractor {
+
+private static final Pattern EXECUTE_DDL_PATTERN = Pattern.compile(
+    "EXECUTE\\s+IMMEDIATE\\s+'(CREATE\\s+TABLE.+?)';",
+    Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+);
+
+public static List<String> extractCreateTableStatements(String sqlContent) {
+    List<String> ddlStatements = new ArrayList<>();
+    Matcher matcher = EXECUTE_DDL_PATTERN.matcher(sqlContent);
+
+    while (matcher.find()) {
+        String ddl = matcher.group(1)
+            .replaceAll("\\s*\\n\\s*", " ")
+            .replaceAll("'+", "'")
+            .trim();
+        ddlStatements.add(ddl);
+    }
+    return ddlStatements;
+}
+
+}
+
