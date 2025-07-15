@@ -1,0 +1,117 @@
+- name: "1. Introduction"
+  prompt: |
+    You are a software documentation analyst creating the **Introduction** section for a Java-based Spring Boot system.
+
+    Use the context below to extract factual data. Do NOT make assumptions.
+
+    {{context}}
+
+    Provide the following:
+    - 1.1 Purpose Overview: What does this system do?
+    - 1.2 Scope: What functionality or modules are covered?
+    - 1.3 Glossary: Define only acronyms or special terms used in config/code.
+    - 1.4 References: Mention related systems only if directly present in config/docs.
+    - 1.5 Compliance: Mention any tech stack compliance (e.g., Java 17, Spring Boot, config structure). If nothing is found, write "Compliance info not available".
+
+    Format in Markdown. Be factual and concise.
+  context:
+    - file: output/config_metadata.json
+    - file: output/di_components.json
+    - file: output/application_props.json
+    - file: output/omr-properties.json
+    - file: output/javadocs_summary.json
+
+- name: "2. System Overview"
+  prompt: |
+    You are documenting the **System Architecture and Interfaces** of a Spring Boot Java system.
+
+    {{context}}
+
+    Provide:
+    - 2.1 Application Architecture: Based on DI metadata and services
+    - 2.2 External Interfaces: From API endpoints or message listeners
+
+    Return only what is found in DI or API schemas. Do not mention other systems unless named.
+
+    Use clean Markdown formatting with bullet points or diagrams (in Markdown).
+  context:
+    - file: output/di_components.json
+    - file: output/api_schemas.json
+    - file: output/javadocs_summary.json
+
+- name: "3. Internal Design"
+  prompt: |
+    Generate the internal system design based on JavaDocs, components, and schema.
+
+    {{context}}
+
+    Write:
+    - 3.1 Software Layers: Identify service, controller, utility layers
+    - 3.2 Major Internal Interfaces: Between classes or services
+    - 3.3 Data Model: Key DB tables and their relationships
+    - 3.4 Software Components: Classes or services and their role
+    - 3.5 Automation Process: Any scheduling or cron-based processes
+    - 3.6 External Files: Only if read/write operations are found
+    - 3.7 Reports: Only if found in code or config
+
+    Only include what is present. Leave "Information not available" for missing parts.
+
+    Format in Markdown using structured lists/tables.
+  context:
+    - file: output/db_schema.json
+    - file: output/config_metadata.json
+    - file: output/di_components.json
+    - file: output/javadocs_summary.json
+
+- name: "4. Error Handling"
+  prompt: |
+    You are documenting the error handling and log behavior of the system.
+
+    {{context}}
+
+    Provide:
+    - 4.1 Error Message Management: How are errors handled in services/controllers?
+    - 4.2 Error Types: e.g., validation, system, I/O
+    - 4.3 Logging Strategy: What log levels or frameworks are configured?
+
+    Base this only on annotations, logging methods, config settings, or JavaDocs. No assumptions.
+
+    Output in Markdown.
+  context:
+    - file: output/di_components.json
+    - file: output/config_metadata.json
+    - file: output/application_props.json
+    - file: output/javadocs_summary.json
+
+- name: "5. Security Design"
+  prompt: |
+    Document security mechanisms in place.
+
+    {{context}}
+
+    List:
+    - Authentication (if Spring Security or tokens are used)
+    - Authorization roles or filters
+    - Sensitive data handling (e.g., passwords, API keys)
+
+    If no information is found, explicitly say: "No security configuration detected in the current metadata."
+
+    Output in bullet points in Markdown.
+  context:
+    - file: output/config_metadata.json
+    - file: output/application_props.json
+    - file: output/di_components.json
+
+- name: "6. Jurisdiction"
+  prompt: |
+    Provide jurisdiction or compliance-related notes.
+
+    {{context}}
+
+    If nothing is found, state:
+    "No jurisdiction-specific logic or localization detected in source configuration or metadata."
+
+    Keep this section minimal unless data is present.
+  context:
+    - file: output/config_metadata.json
+    - file: output/application_props.json
