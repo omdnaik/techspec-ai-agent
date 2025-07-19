@@ -54,5 +54,15 @@
   {
     "title": "Monitoring & Observability",
     "content": "- Thread counts, queue sizes, rejection metrics (via custom meters)\n- Log volume per deal executor\n- Async appender health\n- Disk I/O during fallback sync"
+  },
+  [
+  {
+    "section": "File Processing Module Design",
+    "content": "The File Processing Module is responsible for detecting, parsing, and validating incoming deal files. It begins with the FileWatcherService which uses Java's WatchService to monitor incoming directories. When a file is detected, it is submitted to the FileProcessorService. This service handles:\n\n- Parsing: Reads and extracts deal identifiers like system ID and version number using BufferedReader.\n- Validation: Applies format and content-level checks through configurable validation rules.\n- Routing: Based on parsing outcome and validation results, files are moved between directories (e.g., /input → /tmp or /error).\n\nThis module supports fallback syncing to re-read files in case of overflow events from WatchService. All file parsing tasks are delegated to a dedicated executor with MDC-based logging for per-thread traceability.\n\nParallel file processing is achieved using a consistent hashing mechanism which routes tasks to a fixed pool of single-threaded executors ensuring deal-level sequential integrity."
+  },
+  {
+    "section": "Deal Processing Module Design",
+    "content": "The Deal Processing Module processes parsed deals through transformation and enrichment. It is composed of:\n\n- `DealProcessorService`: The central orchestrator that picks up parsed deals and processes them using dynamic and static logic.\n- `DynamicFieldProcessor`: Applies rules and logic that vary based on deal type and event combinations. Configuration is externalized for flexibility.\n- `StaticFieldProcessor`: Handles common transformations that apply uniformly to all deals.\n- `ConsumerRegistry`: Maintains a prioritized list of processing consumers (functions). Consumers are grouped by priority and executed in parallel within the same priority group.\n- `ConsumerExecutor`: A thread pool that handles parallel execution of consumer methods submitted by the DealProcessorService.\n\nDeal processing leverages a TaskDecorator to propagate logging context (MDC) from the main thread to the consumer threads. This ensures log continuity and supports per-deal log routing. The module is optimized to support high concurrency and performance while preserving deal integrity using deal-specific consistent hashing and executor routing."
   }
+  ]
 ]
