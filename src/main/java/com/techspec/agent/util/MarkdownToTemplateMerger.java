@@ -11,6 +11,28 @@ import java.util.stream.Collectors;
 
 public class MarkdownToTemplateMerger {
 
+    private static String convertMarkdownToHtml(String markdown) {
+    MutableDataSet options = new MutableDataSet();
+    Parser parser = Parser.builder(options).build();
+    HtmlRenderer renderer = HtmlRenderer.builder(options).build();
+    Document document = parser.parse(markdown);
+    String body = renderer.render(document);
+
+    // Wrap body in full XHTML structure
+    return """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <html xmlns="http://www.w3.org/1999/xhtml">
+          <head>
+            <meta charset="UTF-8" />
+            <title>Generated Doc</title>
+          </head>
+          <body>
+            %s
+          </body>
+        </html>
+        """.formatted(body.trim());
+    }
+
     public static void mergeMarkdownSectionsIntoTemplate(Map<String, String> sectionMarkdownMap,
                                                           String templatePath,
                                                           String outputPath) throws Exception {
