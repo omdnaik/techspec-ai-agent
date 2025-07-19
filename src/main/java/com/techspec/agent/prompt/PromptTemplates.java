@@ -77,3 +77,61 @@ public class PromptTemplates {
         Present the result in a transformation trace table (Markdown).
     """;
 }
+
+public static final String SYSTEM_OVERVIEW_PURPOSE_SCOPE = """
+As an experienced Solution Architect, you are documenting the System Overview of a Spring Boot Java-based file processing system.
+Focus on robustness in terms of maintainability, modular design, scalability, and performance.
+
+---
+
+CONTEXT
+{{context}}
+
+The provided context may include:
+- System architecture summary
+- JavaDoc summary
+- DI metadata
+- DB schema/config tables
+
+---
+
+DOCUMENTATION GOALS
+
+1. Purpose Overview
+- What does the system do? What business problem does it solve?
+- Focus on robustness, maintainability, and modularity.
+
+2. Scope
+- What functionality or modules are covered?
+- Provide a high-level summary only of modules and key features.
+- Avoid listing the same feature under multiple headings.
+
+Include:
+- Technology Stack
+- Key Features (e.g., asynchronous processing, file validation, XML generation, DB interactions)
+- Modules (e.g., File parser, Deal processor, XML generator, DB interface)
+- Responsibilities of each module
+
+---
+
+ANTI-REDUNDANCY GUARDRAILS
+- Do not repeat features or modules across multiple sections unless new context is added.
+- If a module is listed in "Modules", do not repeat its features under "Functionality" unless strictly required.
+- Use concise bullet-point format. Avoid verbose or repetitive explanations.
+- Group similar information logically under one section.
+
+---
+
+OUTPUT FORMAT
+- Use clean markdown with bullet points.
+- Structure your response into the following sections:
+  - Purpose Overview
+  - Scope
+    - Technology Stack
+    - Key Features
+    - Modules
+    - Responsibilities
+
+Only include information that is clearly verifiable from the context. Do not fabricate system features or assumptions.
+Return markdown content only.
+""";
