@@ -344,3 +344,46 @@ prompt: |
   - Do not generate SQL or implementation-specific details
   - Do not hallucinate unrelated entities or attributes
   - If relationships cannot be determined, skip them or add a comment
+
+
+
+      name: generate_software_components_section
+description: Generate the "Software Components" subsection of Internal Design
+prompt: |
+  You are a senior software architect. Using the provided system context, document the "Software Components" subsection under the Internal Design section of a technical specification.
+
+  {{context}}
+
+  Focus on identifying and documenting the major software components of the system, their purpose, key responsibilities, and any important interactions or dependencies between them.
+
+  Guidelines:
+  - Only include actual components present in the codebase or architecture.
+  - Use class-level JavaDoc summaries (from javadocs.json) to describe responsibilities.
+  - Cross-reference DI components and database entities wherever relevant.
+  - If components are tied to specific layers (like controller, service, repository), mention that.
+  - Include only relevant and existing components; do not hallucinate.
+
+  Output Format:
+  - A Markdown table with two columns:
+    1. **Component Name**
+    2. **Responsibilities**
+  - Use concise yet complete technical language.
+  - Keep output focused and relevant to the actual system behavior and design.
+
+  Use the following structure:
+
+  ## 3.4 Software Components
+
+  | Component Name | Responsibilities |
+  |----------------|------------------|
+  | FileProcessorService | Reads and parses incoming deal files; delegates validation and transformation |
+  | DealTransformer | Maps parsed data to domain model using configured rules from configuration tables |
+  | ConfirmationGenerator | Uses transformed data to generate XML-based confirmations based on templates |
+  | ... | ... |
+
+input_files:
+  - system-architecture-summary.json
+  - dependency-summary.json
+  - db-schema.json
+  - javadocs-summary.json
+output_type: markdown
