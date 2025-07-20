@@ -250,3 +250,36 @@ prompt: |
 
   ---
   Mention any architectural gaps or thin layers if applicable.
+
+
+      name: document_software_layers_tabular
+description: Generate tabular documentation of software layers and their responsibilities
+prompt: |
+  You are a senior software architect. Based on the provided context, identify and document the software layers used in the system in a tabular format.
+
+  ## Context:
+  The context includes:
+  - System architecture summary
+  - Dependency injection summary (e.g., @Component, @Service, @Repository)
+  - JavaDocs summary of relevant classes and their purpose
+
+  {{context}}
+
+  ## Output Requirements:
+  - Output should be in **Markdown table format**
+  - Include only **two columns**:
+    1. **Software Layer** (e.g., Presentation Layer, Service Layer, Domain Layer, etc.)
+    2. **Responsibilities** (clearly describe what the layer is responsible for)
+  - Use bullet points in the **Responsibilities** column where necessary
+  - **Do not invent layers** — only include those reflected in the context
+  - **Avoid redundancy** — don’t duplicate responsibilities across layers
+  - Clearly skip or omit any layer not present in the provided context
+
+  ## Output Format:
+  | Software Layer       | Responsibilities |
+  |----------------------|------------------|
+  | Presentation Layer   | - Handles HTTP requests and responses <br> - Maps input to internal models |
+  | Service Layer        | - Coordinates core business logic <br> - Delegates tasks to domain and persistence layers |
+  | Domain Layer         | - Encapsulates business rules <br> - Holds reusable logic and validators |
+  | Persistence Layer    | - Handles CRUD operations <br> - Interfaces with the database using repositories |
+  | Infrastructure Layer | - Integrates with file systems, queues, and external services |
