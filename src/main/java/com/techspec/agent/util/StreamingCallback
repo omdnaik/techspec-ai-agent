@@ -1,0 +1,26 @@
+import dev.langchain4j.service.TokenStreamCallback;
+
+public class StreamingCallback implements TokenStreamCallback {
+
+    private final StringBuilder builder = new StringBuilder();
+
+    @Override
+    public void onNext(String token) {
+        System.out.print(token);  // or append to GUI/text area
+        builder.append(token);
+    }
+
+    @Override
+    public void onComplete() {
+        System.out.println("\nStreaming complete.");
+    }
+
+    @Override
+    public void onError(Throwable error) {
+        System.err.println("Error during stream: " + error.getMessage());
+    }
+
+    public String getCollectedOutput() {
+        return builder.toString();
+    }
+}
