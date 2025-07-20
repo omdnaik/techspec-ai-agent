@@ -107,3 +107,31 @@ public class MarkdownToTemplateMerger {
     }
     }
 }
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+public class MarkdownHtmlFormatter {
+
+    /**
+     * Applies inline styling only to code blocks in an HTML string converted from Markdown.
+     * @param html the raw HTML converted from Markdown
+     * @return styled HTML ready for Docx4j import
+     */
+    public static String formatHtmlFromMarkdown(String html) {
+        Document doc = Jsoup.parseBodyFragment(html);
+        Elements codeBlocks = doc.select("pre > code");
+
+        for (Element code : codeBlocks) {
+            Element pre = code.parent();
+            // Remove <code> and keep contents
+            pre.html(code.html());
+
+            // Apply inline styles
+            pre.attr("style", "font-family: Consolas, monospace; font-size:10pt; white-space:pre-wrap;");
+        }
+
+        return doc.body().html();
+    }
+}
