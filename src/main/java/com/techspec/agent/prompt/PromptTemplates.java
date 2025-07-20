@@ -135,3 +135,55 @@ OUTPUT FORMAT
 Only include information that is clearly verifiable from the context. Do not fabricate system features or assumptions.
 Return markdown content only.
 """;
+
+private static final String INTERNAL_DESIGN_DATAMODEL_PHYSICAL="""
+  You are a senior database architect. Based on the provided JSON table definitions, generate a **Physical Data Model (PDM)** suitable for enterprise-grade deployment.
+
+  ## Context:
+  The JSON includes a list of tables, their columns, data types, and key information. Some tables may include index and foreign key definitions.
+
+  {{context}}
+
+  ## Output Requirements:
+  1. Generate SQL DDL statements for each table using a standard RDBMS (preferably PostgreSQL, MySQL, or Oracle – specify which).
+  2. For each table, include:
+     - Table name
+     - Columns with data types
+     - Primary key
+     - Foreign keys (if any)
+     - Indexes (if specified or needed for optimization)
+     - Optional: Default values or constraints (e.g., NOT NULL, UNIQUE)
+  3. Ensure naming conventions follow best practices (snake_case for tables/columns).
+  4. Do not invent any extra fields or tables that are not in the context.
+  5. Avoid hallucination. If key metadata is missing, clearly mention it as a comment in the DDL.
+
+  ## Output Format:
+  - Use plain SQL syntax
+  - Include clear separation between table definitions
+  - Add brief inline comments to explain foreign keys or indexes
+
+  ## Example Output:
+  ```sql
+  -- Table: app_config
+  CREATE TABLE app_config (
+    config_key VARCHAR(100) NOT NULL,
+    config_value TEXT,
+    PRIMARY KEY (config_key)
+  );
+
+  -- Table: customer_order
+  CREATE TABLE customer_order (
+    order_id SERIAL PRIMARY KEY,
+    customer_id INT NOT NULL,
+    order_date DATE NOT NULL,
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id)
+  );
+
+    ---
+
+### 🧠 Anti-Hallucination Features
+
+- `"Do not invent any extra fields or tables"`
+- `"Clearly mention if key metadata is missing"`
+- `"Use only the provided context"`
+""";
