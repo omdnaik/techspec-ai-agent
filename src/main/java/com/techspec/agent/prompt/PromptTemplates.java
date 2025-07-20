@@ -187,3 +187,66 @@ private static final String INTERNAL_DESIGN_DATAMODEL_PHYSICAL="""
 - `"Clearly mention if key metadata is missing"`
 - `"Use only the provided context"`
 """;
+
+name: document_software_layers
+description: Generate documentation for software layers in the system
+prompt: |
+  You are a senior software architect. Based on the provided context, identify and document the **software layers** present in the system.
+
+  ## Context
+  The context includes:
+  - A high-level **system architecture summary**
+  - A **dependency injection (DI) component map** with @Service, @Component, @Repository, etc.
+  - JavaDocs summary of key classes and their responsibilities
+
+  {{context}}
+
+  ## Output Requirements:
+  1. Identify logical software layers (e.g., Presentation, Service, Domain, Persistence, Infrastructure, Security).
+  2. For each layer:
+     - Provide a **brief description** of its responsibility
+     - List **associated components/classes** (based on DI and JavaDoc summaries)
+     - Highlight **key responsibilities** or interactions
+  3. Avoid repeating the same class in multiple layers unless there's a strong architectural reason.
+  4. If any layers are missing or thin, mention this as an observation.
+  5. Be concise but precise — avoid hallucinating layers or responsibilities.
+
+  ## Output Format (Markdown)
+
+  ### 3.1 Software Layers
+
+  #### 1. Presentation Layer
+  - **Purpose**: Handles HTTP requests and responses.
+  - **Components**:
+    - `DealController`: Entry point for deal operations
+    - `FileUploadController`: Manages input files
+  - **Notes**: Exposes REST APIs to external systems.
+
+  #### 2. Service/Application Layer
+  - **Purpose**: Orchestrates business logic and workflows.
+  - **Components**:
+    - `DealProcessingService`: Core orchestration logic
+    - `RetryHandler`: Implements retry behavior
+  - **Notes**: Uses dependency injection for managing orchestration logic.
+
+  #### 3. Domain Layer
+  - **Purpose**: Encapsulates core business logic and domain models.
+  - **Components**:
+    - `Deal`, `Trade`, `Counterparty`
+    - `DealValidator`, `TransformationRules`
+  - **Notes**: Stateless and reusable logic for core business operations.
+
+  #### 4. Persistence Layer
+  - **Purpose**: Manages database access and CRUD operations.
+  - **Components**:
+    - `DealRepository`, `ConfigRepository`
+  - **Notes**: Annotated with `@Repository` and use JPA.
+
+  #### 5. Infrastructure Layer
+  - **Purpose**: Manages integrations, messaging, and file I/O.
+  - **Components**:
+    - `MQPublisher`, `XMLGenerator`, `FileStorageService`
+  - **Notes**: Abstracted from core business logic.
+
+  ---
+  Mention any architectural gaps or thin layers if applicable.
