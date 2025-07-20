@@ -387,3 +387,40 @@ input_files:
   - db-schema.json
   - javadocs-summary.json
 output_type: markdown
+
+
+    name: generate_software_components_section
+description: Generate detailed structured documentation for software components
+prompt: |
+  You are a senior software architect. Using the system context below, generate the "Software Components" subsection (section 3.4) of the Internal Design in a technical specification.
+
+  {{context}}
+
+  Instructions:
+  - Only include components actually defined in the source code or DI summary
+  - Group output by component with headings
+  - Each component must include: Layer, Description, Dependencies, Related DB Tables (if any), and Java Class
+  - Use JavaDocs where available to derive intent and responsibilities
+  - Avoid hallucinating components not in codebase
+  - Mention if a component is controller, service, repository, or utility
+
+  Output Format:
+  ## 3.4 Software Components
+
+  ### <ComponentName>
+  - **Layer**: <controller/service/repository/etc>
+  - **Description**: <What it does, based on JavaDocs and architecture>
+  - **Dependencies**:
+    - <other components it depends on>
+  - **Related Tables**:
+    - <list of db tables if applicable>
+  - **Java Class**: <fully qualified class name>
+
+  Repeat this for each major component.
+
+input_files:
+  - system-architecture-summary.json
+  - dependency-summary.json
+  - db-schema.json
+  - javadocs-summary.json
+output_type: markdown
