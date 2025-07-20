@@ -76,5 +76,34 @@ public class MarkdownToTemplateMerger {
 
     wordMLPackage.save(new File(outputPath));
     }
-    
+    public class HtmlUtils {
+
+    /**
+     * Escapes and formats plain SQL or code as HTML with <pre> and <br/> for line breaks.
+     * Suitable for insertion into DOCX via XHTMLImporterImpl in Docx4j.
+     *
+     * @param code  The raw SQL or code block
+     * @return      Formatted HTML string
+     */
+    public static String prepareHtmlCodeBlock(String code) {
+        if (code == null) return "";
+
+        // Escape HTML special characters
+        String escaped = code
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
+
+        // Replace line breaks with <br/> for HTML rendering
+        String htmlBody = escaped
+                .replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;") // Optional: Convert tabs
+                .replace(" ", "&nbsp;")                    // Preserve spacing
+                .replace("\n", "<br/>");
+
+        // Wrap in <pre> with optional styling
+        return "<pre style=\"font-family: Consolas, monospace; font-size: 10pt;\">" +
+                htmlBody +
+                "</pre>";
+    }
+    }
 }
