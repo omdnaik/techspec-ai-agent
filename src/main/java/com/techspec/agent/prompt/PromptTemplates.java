@@ -283,3 +283,64 @@ prompt: |
   | Domain Layer         | - Encapsulates business rules <br> - Holds reusable logic and validators |
   | Persistence Layer    | - Handles CRUD operations <br> - Interfaces with the database using repositories |
   | Infrastructure Layer | - Integrates with file systems, queues, and external services |
+
+
+
+
+name: generate_conceptual_data_model
+description: Generate a conceptual data model from table and column definitions
+prompt: |
+  You are a data modeling expert. Using the provided JSON containing a list of database tables and their columns, generate a **Conceptual Data Model (CDM)** suitable for stakeholder understanding.
+
+  ## Context:
+  {{context}}
+
+  ## Task:
+  - Analyze the table and column definitions to identify:
+    - High-level **entities** and their **attributes**
+    - **Relationships** between entities (1:1, 1:N, M:N), where inferable
+  - Group logically related columns under conceptual entities
+  - Derive **entity names**, **attribute names**, and **optional relationships** without mentioning data types or physical constraints
+  - Abstract away implementation-specific naming (e.g., `tbl_`, `fk_`, or technical suffixes)
+
+  ## Output Requirements:
+  1. List of Entities:
+     - Entity Name
+     - Description (optional if context supports)
+     - Key Attributes
+     - Other Attributes
+  2. Relationships (if inferrable):
+     - Source Entity
+     - Target Entity
+     - Cardinality (1:1, 1:N, M:N)
+     - Nature of relationship (e.g., "Customer places Order")
+
+  ## Output Format:
+  Use structured Markdown as shown below:
+
+  ### Entities
+
+  #### Entity: Customer
+  - **Key Attribute**: customer_id
+  - **Attributes**:
+    - name
+    - email
+    - phone_number
+
+  #### Entity: Order
+  - **Key Attribute**: order_id
+  - **Attributes**:
+    - order_date
+    - total_amount
+    - customer_id
+
+  ### Relationships
+
+  - **Customer ↔ Order**
+    - Type: 1:N
+    - Description: A customer can place many orders.
+
+  ## Rules:
+  - Do not generate SQL or implementation-specific details
+  - Do not hallucinate unrelated entities or attributes
+  - If relationships cannot be determined, skip them or add a comment
