@@ -1,68 +1,113 @@
 [
   {
+    "chunkID": "1"
     "title": "Overview",
     "content": "This system processes financial deal files through a multi-stage asynchronous pipeline using Spring Boot. The pipeline includes parsing, processing, and XML generation phases. Each stage operates with its own executor and can handle tasks concurrently while maintaining deal-level sequential consistency."
   },
   {
+    "chunkID": "2"
     "title": "Component/Class Overview",
     "content": "| Component                       | Responsibility                                                               |\n| ------------------------------- | ---------------------------------------------------------------------------- |\n| FileWatcherService              | Monitors directories for new files and initiates processing.                 |\n| FileProcessorService            | Parses raw deal files and extracts identifiers.                              |\n| DealProcessorService            | Transforms parsed deal data using business rules.                            |\n| XmlGeneratorService             | Converts transformed data into the final XML format.                         |\n| ConsistentHashingTaskExecutor  | Ensures all tasks for a single deal go to the same single-threaded executor. |\n| DealFileQueueManager           | Queues and serializes processing of files per deal.                          |\n| LoggingConfig                  | Sets up executor-based and thread-based loggers.                             |"
   },
   {
+    "chunkID": "3"
     "title": "Threading & Concurrency Design",
     "content": "- Each major component uses a dedicated ThreadPoolTaskExecutor.\n- The ConsistentHashingTaskExecutor hashes dealId to one of N single-threaded executors.\n- MDC and TaskDecorator are used to propagate logging context.\n- Executors use CallerRunsPolicy to avoid silent task drops."
   },
   {
+    "chunkID": "4"
     "title": "Directory & File Flow",
     "content": "| Deal Status  | Source Dir       | Destination Dir  |\n| ------------ | ---------------- | ---------------- |\n| RECEIVED     | /input           | /tmp             |\n| DEAL_READY   | /tmp             | /fileprocessed   |\n| PROCESSED    | /fileprocessed   | /xml             |\n| ERROR        | Any              | /error           |"
   },
   {
+    "chunkID": "5"
     "title": "Special Case: DEAL_READY",
     "content": "- From FileProcessorService: Move from /tmp \u2192 /fileprocessed.\n- From DealProcessorService: Move from /fileprocessed \u2192 /tmp."
   },
   {
+    "chunkID": "6"
     "title": "Status Routing Logic",
     "content": "public enum DealStatus {\n    DEAL_READY {\n        public Path getSource(ProcessingStage stage) {\n            return stage == FILE_PROCESSING ? TMP : FILE_PROCESSED;\n        }\n        public Path getDestination(ProcessingStage stage) {\n            return stage == FILE_PROCESSING ? FILE_PROCESSED : TMP;\n        }\n    }\n    // ... other statuses\n}"
   },
   {
+    "chunkID": "7"
     "title": "Logging Strategy",
     "content": "- Executors are prefixed (e.g., dealExecutor-1, fileExecutor-1).\n- MDC stores threadName as dealThread.\n- Sifting Appender writes logs per thread to logs/dealExecutor-1.log, etc.\n- ConsumerExecutor logs are routed via MDC propagation."
   },
   {
+    "chunkID": "8"
     "title": "Performance Targets",
     "content": "- Files: 10,000\n- Duration: 8 hours\n- Target: ~300 files/minute\n- Threads per stage: Max 5 (configurable)\n- Deal-level concurrency: Sequential per deal"
   },
   {
+    "chunkID": "9"
     "title": "Key Constraints",
     "content": "- Spring Boot batch job (non-web)\n- Spring JDBC with HikariCP\n- Spring Boot starter for Jersey REST (for optional APIs)\n- Conditional secondary DB (enabled by XML property at startup)\n- Not using Spring Batch"
   },
   {
+    "chunkID": "10"
     "title": "Error Handling & Recovery",
     "content": "- Exceptions during processing are caught and status is set to ERROR\n- Files moved to /error dir\n- Overflow events from WatchService trigger fallback sync\n- Fallback sync avoids re-queuing already queued files"
   },
   {
+    "chunkID": "11"
     "title": "Java Watcher Overflow Handling",
     "content": "- Queue overflow is expected under high volume\n- Uses fallback sync thread to scan and enqueue files manually\n- Files already in executor queues are skipped"
   },
   {
+    "chunkID": "12"
     "title": "Logging Pipeline Flow",
     "content": "DealExecutor \u2192 submits \u2192 ConsumerExecutor\n           \u21b3 MDC Decorator adds dealThread\nConsumerExecutor \u21b3 inherits MDC context\nLogs from both go to logs/dealExecutor-<X>.log"
   },
   {
+    "chunkID": "13"
     "title": "Suggestions for Future Enhancements",
     "content": "- Replace DB polling with Event-Driven messaging\n- Introduce in-memory state coordination (e.g., Redis/MapDB)\n- Explore batching file tasks by deal instead of individual\n- Log-level telemetry using Micrometer + Grafana dashboards"
   },
   {
+    "chunkID": "14"
     "title": "Monitoring & Observability",
     "content": "- Thread counts, queue sizes, rejection metrics (via custom meters)\n- Log volume per deal executor\n- Async appender health\n- Disk I/O during fallback sync"
   },
-  [
   {
-    "section": "File Processing Module Design",
+    "chunkID": "15"
+    "title": "File Processing Module Design",
     "content": "The File Processing Module is responsible for detecting, parsing, and validating incoming deal files. It begins with the FileWatcherService which uses Java's WatchService to monitor incoming directories. When a file is detected, it is submitted to the FileProcessorService. This service handles:\n\n- Parsing: Reads and extracts deal identifiers like system ID and version number using BufferedReader.\n- Validation: Applies format and content-level checks through configurable validation rules.\n- Routing: Based on parsing outcome and validation results, files are moved between directories (e.g., /input → /tmp or /error).\n\nThis module supports fallback syncing to re-read files in case of overflow events from WatchService. All file parsing tasks are delegated to a dedicated executor with MDC-based logging for per-thread traceability.\n\nParallel file processing is achieved using a consistent hashing mechanism which routes tasks to a fixed pool of single-threaded executors ensuring deal-level sequential integrity."
   },
   {
-    "section": "Deal Processing Module Design",
+    "chunkID": "16"
+    "title": "Deal Processing Module Design",
     "content": "The Deal Processing Module processes parsed deals through transformation and enrichment. It is composed of:\n\n- `DealProcessorService`: The central orchestrator that picks up parsed deals and processes them using dynamic and static logic.\n- `DynamicFieldProcessor`: Applies rules and logic that vary based on deal type and event combinations. Configuration is externalized for flexibility.\n- `StaticFieldProcessor`: Handles common transformations that apply uniformly to all deals.\n- `ConsumerRegistry`: Maintains a prioritized list of processing consumers (functions). Consumers are grouped by priority and executed in parallel within the same priority group.\n- `ConsumerExecutor`: A thread pool that handles parallel execution of consumer methods submitted by the DealProcessorService.\n\nDeal processing leverages a TaskDecorator to propagate logging context (MDC) from the main thread to the consumer threads. This ensures log continuity and supports per-deal log routing. The module is optimized to support high concurrency and performance while preserving deal integrity using deal-specific consistent hashing and executor routing."
+  },
+
+  {
+    "chunkID": "17"
+    "title": "Transformation Trace",
+    "description": "This section traces how data transforms across different components from file ingestion to XML generation."
+  },
+  {
+    "chunkID": "17.1"
+    "title": "Input Ingestion",
+    "description": "Incoming raw files are detected by `FileWatcherService` in monitored directories. These files are read using `BufferedReader` in `FileProcessorService`, which extracts metadata such as dealId, systemId, and version."
+  },
+  {
+    "chunkID": "17.2"
+    "title": "File Validation and Routing",
+    "description": "`FileProcessorService` validates files using pluggable validators. Based on parsing success or failure, files are moved between `/tmp`, `/fileprocessed`, or `/error` directories. The dealId is hashed and routed using `ConsistentHashingTaskExecutor` to maintain thread affinity per deal."
+  },
+  {
+    "chunkID": "17.3"
+    "title": "Deal Transformation",
+    "description": "`DealProcessorService` performs the transformation logic. It identifies and executes `@Consumer` methods per deal based on field-level configuration. Two types of processors are used:\n- `StaticFieldProcessor` for mapped methods per field.\n- `DynamicFieldProcessor` for dynamic resolution of transformation methods.\nEach consumer transforms specific fields of the deal data in parallel using `CompletableFuture`."
+  },
+  {
+    "chunkID": "17.4"
+    "titke": "Post-Processing and Output Generation",
+    "description": "Once all consumer tasks complete, the final transformed deal object is passed to `XmlGeneratorService`, which converts it into XML format using JAXB marshalling. Generated XML files are stored in the `/xml` directory with a filename pattern based on deal metadata."
+  },
+  {
+    "chunkID": "17.5"
+    "title": "Error Traceability",
+    "description": "At each stage, if an error occurs, the file is moved to the `/error` directory. Logging is performed with deal/thread-based MDC to trace which executor/thread handled each stage of the transformation."
   }
-  ]
 ]
