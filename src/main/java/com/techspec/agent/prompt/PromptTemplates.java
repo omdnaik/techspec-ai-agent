@@ -187,6 +187,40 @@ private static final String INTERNAL_DESIGN_DATAMODEL_PHYSICAL="""
 - `"Clearly mention if key metadata is missing"`
 - `"Use only the provided context"`
 """;
+String batchJobFlowPrompt = """
+Using the provided context files:
+
+1. `system-architecture-summary.json`: which describes how the application works overall.
+2. `di-metadata.json`: which includes details of injected dependencies and their interrelations.
+
+Your tasks are:
+
+(A) Generate a step-by-step batch job flow in markdown-based diagram syntax (like Mermaid or ASCII flow), clearly labeling each stage, components involved, and direction of flow.
+
+(B) Write a detailed explanation describing:
+ - The purpose of the batch job
+ - The sequence of operations
+ - How different components interact (as per DI and architecture)
+ - Where concurrency, retries, or error handling occurs
+ - How the job is triggered and how it ends
+
+Format your response in two sections:
+
+---
+## 🔁 Flow Diagram
+(Use Mermaid or ASCII diagram syntax)
+
+---
+## 🧠 Explanation of Flow
+(Explain the flow clearly in technical documentation tone)
+
+Guidelines:
+- Only include components or classes found in the system-architecture-summary.json or di-metadata.json.
+- If a step in the flow involves an unknown component, respond with: "Unknown component - please verify architecture."
+- Do not assume technologies or frameworks unless mentioned in the context.
+- Do not fabricate new modules, services, or beans not found in the DI metadata.
+""";
+
 
 name: document_software_layers
 description: Generate documentation for software layers in the system
