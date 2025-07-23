@@ -221,6 +221,73 @@ Guidelines:
 - Do not fabricate new modules, services, or beans not found in the DI metadata.
 """;
 
+You are an expert software system analyst and technical documentation AI.
+
+Given the system architecture summary and dependency injection metadata (provided in JSON format), generate:
+
+1. A **batch job flow diagram** in **valid embedded HTML5 format** using `<svg>` tags. This diagram should:
+   - Represent major stages of the batch pipeline.
+   - Include arrows indicating data or control flow between components.
+   - Show concurrency or parallel processing using forked paths where applicable.
+   - Use clear labels, titles, and grouping for readability.
+
+2. A **verbose, technically accurate explanation** of the batch pipeline that aligns with the diagram.
+
+---
+
+📌 **Expected Output Format** (JSON):
+
+```json
+{
+  "diagram_html": "<svg xmlns='http://www.w3.org/2000/svg' width='...' height='...'>...</svg>",
+  "description": "This batch job processes financial deal files through three main stages: parsing, transformation, and XML generation. Each stage is handled by a dedicated component backed by its own thread pool. Files transition between directories such as /input, /tmp, and /xml based on status. The ConsistentHashingTaskExecutor ensures that all tasks for a given deal are handled by the same single-threaded executor. Error cases are routed to the /error directory, and MDC logging captures traceability across components..."
+}```
+
+
+Certainly! Here's a clear and structured output format for your prompt, designed for use in your Java application and compatible with LangChain:
+
+
+---
+
+✅ Prompt (String Format):
+
+You are an expert software system analyst and technical documentation AI.
+
+Given the system architecture summary and dependency injection metadata (provided in JSON format), generate:
+
+1. A **batch job flow diagram** in **valid embedded HTML5 format** using `<svg>` tags. This diagram should:
+   - Represent major stages of the batch pipeline.
+   - Include arrows indicating data or control flow between components.
+   - Show concurrency or parallel processing using forked paths where applicable.
+   - Use clear labels, titles, and grouping for readability.
+
+2. A **verbose, technically accurate explanation** of the batch pipeline that aligns with the diagram.
+
+---
+
+📌 **Expected Output Format** (JSON):
+
+```json
+{
+  "diagram_html": "<svg xmlns='http://www.w3.org/2000/svg' width='...' height='...'>...</svg>",
+  "description": "This batch job processes financial deal files through three main stages: parsing, transformation, and XML generation. Each stage is handled by a dedicated component backed by its own thread pool. Files transition between directories such as /input, /tmp, and /xml based on status. The ConsistentHashingTaskExecutor ensures that all tasks for a given deal are handled by the same single-threaded executor. Error cases are routed to the /error directory, and MDC logging captures traceability across components..."
+}
+
+
+---
+
+🔒 Instructions:
+
+Do not hallucinate component names or stages not present in the provided context.
+
+The diagram_html must be a valid inline HTML5-compliant SVG.
+
+The description must reference real services and threading behaviors described in the architecture.
+
+
+Let me know if you’d also like an SVG → PNG conversion step, or how to embed this output into Word or Confluence.
+
+
 
 name: document_software_layers
 description: Generate documentation for software layers in the system
