@@ -124,4 +124,47 @@ Logs from both go to `logs/dealExecutor-<X>.log`
 * Uses conditional bean creation and `@Primary` for DB routing
 * Uses fallback sync with `BlockingQueue` where Watcher fails
 * Extensible `Enum` status routing strategy
+* 
+
+Here's a structured prompt you can use to prepare a presentation for a meeting:
+
+
+---
+
+Prompt Template
+"I need help creating a presentation for an upcoming meeting. Here are the details:
+
+Meeting Objective: [e.g., present Q2 results, propose a new project, align on strategy]
+
+Audience: [e.g., senior leadership, project team, clients]
+
+Time Limit: [e.g., 10 minutes, 30 minutes]
+
+Key Points to Cover:
+
+1. [e.g., performance metrics]
+
+
+2. [e.g., challenges and solutions]
+
+
+3. [e.g., next steps]
+
+
+
+Tone and Style: [e.g., formal, persuasive, informative, concise]
+
+Visual Aids Needed: [e.g., charts, graphs, screenshots, bullet points]
+
+Any Specific Tools/Format Required: [e.g., PowerPoint, Google Slides]
+
+
+Please help me outline the presentation and suggest slide titles with key content for each."
+
+
+---
+
+Would you like me to fill in this prompt with your current meeting details?
+
+
 
