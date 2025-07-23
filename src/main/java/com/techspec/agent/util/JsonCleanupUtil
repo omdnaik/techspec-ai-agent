@@ -1,0 +1,35 @@
+public class JsonCleanupUtil {
+
+    /**
+     * Cleans up LLM-generated JSON string by removing markdown formatting,
+     * stray backticks, and code block wrappers.
+     *
+     * @param rawResponse Raw string from LLM
+     * @return Cleaned JSON string
+     */
+    public static String cleanJsonResponse(String rawResponse) {
+        if (rawResponse == null || rawResponse.trim().isEmpty()) {
+            return "";
+        }
+
+        // Trim to avoid edge whitespace
+        String cleaned = rawResponse.trim();
+
+        // Remove Markdown-style code fences
+        if (cleaned.startsWith("```json")) {
+            cleaned = cleaned.substring(7);
+        } else if (cleaned.startsWith("```")) {
+            cleaned = cleaned.substring(3);
+        }
+
+        if (cleaned.endsWith("```")) {
+            cleaned = cleaned.substring(0, cleaned.length() - 3);
+        }
+
+        // Remove all stray backticks
+        cleaned = cleaned.replace("`", "");
+
+        // Final cleanup
+        return cleaned.trim();
+    }
+}
