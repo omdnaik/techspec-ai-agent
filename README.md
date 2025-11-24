@@ -1,3 +1,30 @@
+
+
+
+[project]
+name = "uat-automation"
+version = "1.0.0"
+description = "Robot Framework based UAT automation with Selenium"
+requires-python = ">=3.10"
+
+dependencies = [
+    "robotframework>=6.1",
+    "robotframework-seleniumlibrary>=6.0",
+    "selenium>=4.20",
+    "webdriver-manager>=4.0"
+]
+
+[tool.uv]
+# optional: keeps .venv inside project root
+venv = ".venv"
+
+
+robotframework>=6.1
+robotframework-seleniumlibrary>=6.0
+selenium>=4.20
+webdriver-manager>=4.0
+
+
 # TechSpec AI Agent
 
 
