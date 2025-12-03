@@ -1,6 +1,75 @@
+''
+- name: Run UI Automation Tests in Interactive Mode
+  hosts: windows
+  gather_facts: no
 
+  vars:
+    task_name: "Run_UI_Tests"
+    python_interpreter: "python.exe" # or full path if needed
 
+  tasks:
+    # Step-1: Make sure there is an active interactive console session
+    - name: Detect Active Console Session ID
+      win_shell: |
+        $session = quser | Select-String "Active"
+        if ($session) {
+          ($session -split '\s+')[2]
+        } else {
+          ""
+        }
+      register: console_session
 
+    - name: Attach to console session if not active
+      win_shell: |
+        $sid = quser | Select-String "{{ ansible_user }}" | % { ($_ -split '\s+')[2] }
+        if ($sid) {
+          tscon $sid /dest:console
+        }
+      when: console_session.stdout == ""
+
+    # Step-2: Generate delayed start boundary (90 seconds ahead)
+    - name: Calculate scheduled start time
+      set_fact:
+        start_time: "{{ '%Y-%m-%dT%H:%M:%S' | strftime(ansible_date_time.epoch | int + 120) }}"
+
+    # Step-3: Create Scheduled Task with interactive UI
+    - name: Create scheduled task to run UI python tests
+      community.windows.win_scheduled_task:
+        name: "{{ task_name }}"
+        description: "Run UI tests in real desktop session"
+        enabled: yes
+        run_level: highest
+        logon_type: password
+        username: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        triggers:
+          - type: time
+            start_boundary: "{{ start_time }}"
+        actions:
+          - path: "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+            arguments: >
+              -WindowStyle Maximized -Command "& {
+                $env:service_account_username='{{ service_account_username }}';
+                $env:service_account_password='{{ service_account_password }}';
+                $env:target_environment='{{ target_environment }}';
+                $env:project='{{ project }}';
+                {{ python_interpreter }} '{{ python_script }}' '{{ test_report_path }}' |
+                Out-File 'C:\Temp\tcoe-log.txt' -Append
+              }"
+        state: present
+      register: task_created
+
+    # Step-4: Run task immediately if needed
+    - name: Start scheduled task immediately
+      win_scheduled_task:
+        name: "{{ task_name }}"
+        state: running
+      when: task_created is changed
+
+    - debug:
+        msg: "Task '{{ task_name }}' created and triggered successfully!"
+
+''
 [project]
 name = "uat-automation"
 version = "1.0.0"
