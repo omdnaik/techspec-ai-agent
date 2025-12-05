@@ -1,3 +1,44 @@
+
+
+def loadDependencies = {
+                        def config = readYaml file: 'suite-dependencies.yml'
+                        return config.suites
+                    }
+
+                    def parseUserSelection = {
+                        return params.SELECTED_SUITES.split(/\s+/) as List
+                    }
+
+                    def computeExecutionOrder = { deps, selected ->
+                        def order = []
+                        selected.each { suite ->
+                            if (!deps.containsKey(suite)) {
+                                error "Unknown suite '${suite}' in config"
+                            }
+                            order.addAll(deps[suite])
+                            order.add(suite)
+                        }
+                        return order.unique() // final dedupe preserving order
+                    }
+
+                    def validateExecutionOrder = { deps, order ->
+                        order.eachWithIndex { suite, idx ->
+                            def req = deps[suite] ?: []
+                            req.each { dep ->
+                                if (order.indexOf(dep) > idx) {
+                                    error """
+                                    Dependency violation detected:
+                                      '${suite}' appears before '${dep}'
+                                    Correct this in suite-dependencies.yml
+                                    """
+                                }
+                            }
+                        }
+                        echo "Dependency validation passed ✔"
+                    }
+
+
+
 ''
 - name: Run UI Automation Tests in Interactive Mode
   hosts: windows
