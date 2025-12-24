@@ -1,3 +1,37 @@
+- name: Monitor Actual Scheduled Job Status
+  win_shell: |
+    # Check the state of the actual Windows task
+    $task = Get-ScheduledTask -TaskName "{{ task_name }}"
+    if ($task.State -eq 'Running') {
+        exit 1  # Still running, tell Ansible to try again
+    } else {
+        # Task finished! Output the details for the regex check
+        schtasks /Query /TN "{{ task_name }}" /V /FO LIST
+    }
+  register: monitor_result
+  # Use 'until' to check the exit code (rc) of the script above
+  until: monitor_result.rc == 0
+  retries: 1080                # 1080 retries * 60s delay = 18 hours
+  delay: 60                    # Check every 60 seconds
+  # ASYNC PROTECTION:
+  async: 64800                 # Maximum runtime allowed (18 hours)
+  poll: 10                     # Re-establish WinRM connection every 10s to verify script status
+
+
+
+- name: Extract and Verify Exit Code
+  set_fact:
+    task_exit_code: "{{ monitor_result.stdout | regex_findall('Last Result:\\s*(\\S+)', '\\1') | first | default('1') | trim }}"
+
+- name: Fail if the task reported a non-zero exit code
+  fail:
+    msg: "The task finished with error code: {{ task_exit_code }}"
+  when: task_exit_code | int != 0
+
+
+
+
+
 
 Absolutely — your automation pipeline has evolved into something quite sophisticated.
 Here’s a clear, professional summary of the capabilities and smart behavior your pipeline will support — based entirely on our discussions so far.
