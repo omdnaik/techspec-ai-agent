@@ -9,6 +9,9 @@
         schtasks /Query /TN "{{ task_name }}" /V /FO LIST
     }
   register: monitor_result
+jdbc:oracle:oci:@(DESCRIPTION=(ADDRESS=(PROTOCOL=tcps)(HOST=host)(PORT=port))(CONNECT_DATA=(SERVICE_NAME=service))(SECURITY=(MY_WALLET_DIRECTORY=/path/to/wallet2)))
+
+
   # Use 'until' to check the exit code (rc) of the script above
   until: monitor_result.rc == 0
   retries: 1080                # 1080 retries * 60s delay = 18 hours
