@@ -1,3 +1,146 @@
+---
+name: java-unit-testing
+description: Generate automated JUnit and Mockito unit tests for Java 17/21 apps, emphasizing 100% coverage, parameterized tests, domain data, and asynchronous mocking.
+---
+
+# Java Unit Testing Instructions
+
+When requested to write, update, or analyze automated unit tests for a Java method or class, you must strictly follow these guidelines:
+
+## 1. System Overview & Architecture
+[Insert brief description of the system's business purpose here, e.g., "This application is a high-volume intraday file processing engine..."]
+
+- **Core Principle**: The system follows a strict "Fail Fast" design. All data validation must occur immediately, and all exceptions must be caught and explicitly handled within the Service Layer. 
+- **Architecture**: The application follows Hexagonal Architecture. Core domain logic is strictly isolated from external dependencies. Unit tests for the domain must never reference external adapter classes.
+
+## 2. System Modules & Boundaries
+To ensure accurate test scoping and mocking, adhere to these module responsibilities:
+- **[Insert Module 1 Name]**: [Insert brief description of responsibilities, e.g., "Strictly handles I/O polling. Does NOT parse file content."]
+- **[Insert Module 2 Name]**: [Insert brief description, e.g., "Translates raw strings into domain objects."]
+- **[Insert Module 3 Name]**: [Insert brief description, e.g., "Applies business rules. Never performs database writes."]
+- **[Insert Module 4 Name]**: [Insert brief description, e.g., "The only layer permitted to interact with the repository."]
+
+## 3. Core Frameworks & Stack
+- **JUnit 5**: Default to JUnit Jupiter. Use modern annotations (`@Test`, `@BeforeEach`, `@AfterEach`).
+- **Standard Assertions Only**: Strictly use standard JUnit assertions (`org.junit.jupiter.api.Assertions.*`). Do not use AssertJ or Hamcrest.
+- **Mockito**: Isolate the source under test using `@ExtendWith(MockitoExtension.class)`. Use `@Mock` for dependencies and `@InjectMocks` for the class under test.
+- **Spring Boot Context**: Do NOT use `@SpringBootTest`. Unit tests must be fast, lightweight, and completely isolated from the Spring application context.
+
+## 4. Exhaustive Scenario & Coverage Targeting
+Your goal is to generate test suites that achieve **100% line and branch coverage** for the core business logic. Systematically analyze the source code and generate tests for the following:
+- **Logical Branching**: Write a distinct test case (or parameterized input) for every `if`, `else if`, `else`, and `switch` case in the method. 
+- **Exception Paths**: Explicitly write tests that force the code into every `catch` block. Verify that the correct exception is thrown, caught, and handled in the service layer according to the system's "Fail Fast" principles.
+- **Boundary Conditions**: For every numeric or string evaluation, generate test inputs for the exact boundary, just below the boundary, and just above the boundary (e.g., null, empty string, limits).
+- **Null Object Pattern**: Always include tests that pass `null` or missing dependencies to verify robust failure handling.
+- **Exclusions**: Do NOT write unit tests for pure boilerplate (e.g., standard getters/setters) unless they contain custom business logic. 
+
+## 5. Naming Conventions & Patterns
+- **Strict Method Naming**: Test methods MUST follow the exact convention: `methodNameStateUnderTestExpectedBehavior` (camelCase without underscores). 
+- **Mandatory Parameterized Testing**: Use `@ParameterizedTest` with `@CsvSource`, `@ValueSource`, or `@MethodSource` whenever multiple inputs map to predictable outputs to avoid test duplication.
+- **Arrange-Act-Assert**: Structure all test methods visually into `// Arrange`, `// Act`, and `// Assert` blocks.
+
+## 6. High-Volume Intraday Processing & Async Logic
+- **File Handling**: Mock standard Java file watchers (`WatchService`, `WatchKey`, `WatchEvent`) when testing directory polling. Explicitly test that streams, buffers, and file handlers are properly closed (`try-with-resources`).
+- **Async Processing (ExecutorService)**: Do not use real multithreading. Mock the `ExecutorService`. Use Mockito's `ArgumentCaptor` to capture the `Runnable` or `Callable` submitted to the executor, and explicitly invoke `.run()` or `.call()` on the captured thread to test the inner asynchronous logic synchronously.
+
+## 7. Domain Context & Test Data Generation
+When generating test data, stubbing mocks, or creating inputs for parameterized tests, you MUST use the following supported business products and event types. Do not use generic placeholders (e.g., "test1", "foo"). 
+
+**Supported Products:**
+- `[Insert Product 1]`
+- `[Insert Product 2]`
+- `[Insert Product 3]`
+
+**Supported Events:**
+- `[Insert Event 1]`
+- `[Insert Event 2]`
+- `[Insert Event 3]`
+
+## 8. AI Generation Watermarking
+To maintain clear audit trails in the codebase:
+- **Class-Level Watermark**: Add a Javadoc comment at the top of the generated test class: `/** AI-Generated by Roo Code */`
+- **Method-Level Watermark**: Add a standard comment directly above any generated method signature: `// AI-Generated`
+
+## 9. Code Template Structure
+
+```java
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.concurrent.ExecutorService;
+
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ * AI-Generated by Roo Code
+ */
+@ExtendWith(MockitoExtension.class)
+class IntradayProcessorTest {
+
+    @Mock
+    private ExecutorService executorService;
+
+    @Mock
+    private DependencyModule dependencyModule;
+
+    @InjectMocks
+    private IntradayProcessor processor;
+
+    @Captor
+    private ArgumentCaptor<Runnable> runnableCaptor;
+
+    // AI-Generated
+    @ParameterizedTest
+    @CsvSource({
+        "[Insert Product 1], [Insert Event 1], true",
+        "[Insert Product 2], [Insert Event 3], true",
+        "UNSUPPORTED_PRODUCT, [Insert Event 1], false"
+    })
+    void processVariousProductEventStatesExpectedResult(String product, String eventType, boolean expectedResult) {
+        // Arrange
+        // Setup mock behaviors based on input targeting 100% branch coverage
+        
+        // Act
+        boolean actualResult = processor.validateAndQueue(product, eventType);
+        
+        // Assert
+        assertEquals(expectedResult, actualResult, "Validation result did not match expected state.");
+    }
+
+    // AI-Generated
+    @Test
+    void executeAsyncValidDataSubmitsToExecutor() {
+        // Arrange
+        DomainObject mockData = new DomainObject("[Insert Product 1]", "[Insert Event 1]");
+        
+        // Act
+        processor.processAsync(mockData);
+        
+        // Assert
+        verify(executorService, times(1)).submit(runnableCaptor.capture());
+        
+        // Extract the runnable and execute it synchronously to test the inner async logic
+        Runnable asyncTask = runnableCaptor.getValue();
+        asyncTask.run();
+        
+        verify(dependencyModule, times(1)).execute(any());
+    }
+}
+
+
+
+😂
+
+
+
 - name: Monitor Actual Scheduled Job Status
   win_shell: |
     # Check the state of the actual Windows task
