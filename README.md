@@ -1,3 +1,28 @@
+
+# Master Directives
+- **State Management (Text):** You MUST use a local file (`./temp_tech_spec_draft.md`) to append your Markdown text findings step-by-step. 
+- **State Management (Diagrams):** Do NOT put Mermaid syntax directly into the markdown file. You MUST save each generated Mermaid diagram into its own separate file (e.g., `./diagram_component.mermaid`, `./diagram_sequence.mermaid`).
+- **Placeholders:** In your `./temp_tech_spec_draft.md` file, place explicit, unique placeholders where the diagrams should go (e.g., `[[PLACEHOLDER_COMPONENT_DIAGRAM]]`).
+- **Two-Pass Publishing:** 1. **Pass 1:** Publish the initial `./temp_tech_spec_draft.md` text to Confluence using the MCP server.
+  2. **Pass 2:** Read your separate `.mermaid` files, wrap their contents in the Confluence XML macro format (`<ac:structured-macro ac:name="mermaid-macro"...`), replace the placeholders on the newly published page, and execute a page update via the Confluence MCP.
+
+# Execution Workflow
+You have been provided `<repo_name>` and `<confluence_space>`. Execute these steps sequentially:
+1. **Initialize Scratchpad:** Create `./temp_tech_spec_draft.md`. Read the **Master Technical Specification document template** via Confluence MCP and write its headings into the scratchpad.
+2. **Step 1 - Analyze Properties:** Search `<repo_name>` for config files and document them in the scratchpad.
+3. **Step 2 - Analyze DB Objects:** Document the schema in the scratchpad. Generate the ERD Mermaid syntax, save it as `./diagram_erd.mermaid`, and write `[[PLACEHOLDER_ERD]]` in the scratchpad.
+4. **Step 3 - Identify Modules:** List distinct functional modules in the scratchpad.
+5. **Step 4 - Deep Dive into Modules:** Analyze the Java code. Write text descriptions in the scratchpad. Generate Sequence Diagrams, save them as separate `.mermaid` files, and place corresponding placeholders (e.g., `[[PLACEHOLDER_SEQ_MODULE_A]]`) in the scratchpad.
+6. **Step 5 - Analyze Scripts:** Document `.sh` files, cron configs, or Dockerfiles in the scratchpad.
+7. **Publish (Pass 1):** Use the Confluence MCP to publish `./temp_tech_spec_draft.md` to `<confluence_space>` strictly using the naming convention: `[Service Name] - Master Technical Specification`.
+8. **Patch Diagrams (Pass 2):** Use the Confluence MCP to update the newly created page. Swap out the `[[PLACEHOLDER_...]]` tags with the contents of your `.mermaid` files wrapped in the required `<ac:structured-macro>` XML tags.
+9. **Cleanup:** Delete the `.md` and `.mermaid` temporary files.
+
+
+
+
+
+
 - **Publishing Format Strictness:** Do NOT attempt to convert the `.md` file to HTML or XHTML yourself before publishing. You must pass the raw Markdown text directly to the Confluence MCP server. The MCP server will handle the rendering. ONLY the Mermaid diagrams should be wrapped in the `<ac:...>` XML tags; leave the rest of the document as pure, standard Markdown.
 - **Confluence Diagram Formatting:** Standard markdown mermaid blocks (` ```mermaid `) will not render via the Confluence API. When generating the final payload to publish to Confluence, you MUST wrap all Mermaid.js syntax inside the native Confluence XML macro storage format exactly like this:
   <ac:structured-macro ac:name="mermaid" ac:schema-version="1">
