@@ -1,5 +1,4 @@
-
-
+- **Publishing Format Strictness:** Do NOT attempt to convert the `.md` file to HTML or XHTML yourself before publishing. You must pass the raw Markdown text directly to the Confluence MCP server. The MCP server will handle the rendering. ONLY the Mermaid diagrams should be wrapped in the `<ac:...>` XML tags; leave the rest of the document as pure, standard Markdown.
 - **Confluence Diagram Formatting:** Standard markdown mermaid blocks (` ```mermaid `) will not render via the Confluence API. When generating the final payload to publish to Confluence, you MUST wrap all Mermaid.js syntax inside the native Confluence XML macro storage format exactly like this:
   <ac:structured-macro ac:name="mermaid" ac:schema-version="1">
     <ac:plain-text-body><![CDATA[
