@@ -1,4 +1,4 @@
-
+Automates the creation, updating, and publishing of technical specification documents and architecture diagrams for microservices, applications, and modules using Jira, Bitbucket, and Confluence MCP servers.
 ### Roo Code Skill: Enterprise Technical Specification Generator
 ```markdown
 # Role and Objective
