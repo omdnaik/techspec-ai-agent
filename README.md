@@ -1,4 +1,14 @@
 
+- **Documentation Depth (Prose over Pictures):** Diagrams do NOT replace text. For every section, module, or database schema, you MUST write comprehensive, detailed paragraphs explaining the "Why" and "How" (e.g., business rules, responsibilities, external integrations, error handling) before inserting a diagram placeholder. Write at least 2-3 detailed paragraphs per core section. 
+- **Diagram Metadata & Legends:** You must strictly format the context around every diagram placeholder in your scratchpad:
+  1. **Preceding Heading:** Add a clear Markdown heading immediately above the placeholder (e.g., `#### 1.1 Component Architecture`).
+  2. **Mermaid Title:** Inside the actual `.mermaid` file, you MUST include a title at the very top using Mermaid syntax (e.g., `---` \n `title: Deal Processing Flow` \n `---`).
+  3. **Caption & Legend:** Immediately below the placeholder in your markdown draft, write a text-based caption and a bulleted legend explaining the key components, external systems, or data paths shown in the diagram.
+
+
+
+
+
 # Master Directives
 - **State Management (Text):** You MUST use a local file (`./temp_tech_spec_draft.md`) to append your Markdown text findings step-by-step. 
 - **State Management (Diagrams):** Do NOT put Mermaid syntax directly into the markdown file. You MUST save each generated Mermaid diagram into its own separate file (e.g., `./diagram_component.mermaid`, `./diagram_sequence.mermaid`).
