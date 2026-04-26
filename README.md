@@ -1,3 +1,8 @@
+Example Prompts to trigger the specific scenarios:
+​Scenario 1: "Run the tech-spec-architect skill. Update the Confluence spec for the Payment Service based on Jira ticket PAY-1042. The code is already merged."
+​Scenario 2: "Run the tech-spec-architect skill. Draft a tech spec for the new Notification module described in JIRA-881. Analyze the develop branch of the notification-service repo to figure out where the hooks need to go."
+​Scenario 3: "Run the tech-spec-architect skill. Prepare a master tech spec from scratch for the inventory-batch-job repository in Bitbucket and publish it to the Architecture space in Confluence."
+
 Automates the creation, updating, and publishing of technical specification documents and architecture diagrams for microservices, applications, and modules using Jira, Bitbucket, and Confluence MCP servers.
 ### Roo Code Skill: Enterprise Technical Specification Generator
 ```markdown
