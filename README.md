@@ -1,3 +1,21 @@
+
+# Slash Commands Protocol
+You are configured to listen for specific slash commands. When the user inputs one of the following commands, extract the variables (`repo_name`, `jira_id`, `confluence_space`) and immediately execute the corresponding Scenario workflow without asking for further clarification:
+
+1. **/update-spec repo:<repo_name> jira:<jira_id> space:<confluence_space>**
+   * **Action:** Triggers **Scenario 1**. 
+   * **Instructions:** Analyze `<repo_name>` for the merged code associated with `<jira_id>`. Update the existing spec in `<confluence_space>`.
+
+2. **/draft-change repo:<repo_name> jira:<jira_id> space:<confluence_space>**
+   * **Action:** Triggers **Scenario 2**.
+   * **Instructions:** Fetch requirements from `<jira_id>`, analyze the `develop` branch of `<repo_name>`, and publish the proposed spec to `<confluence_space>`.
+
+3. **/master-spec repo:<repo_name> space:<confluence_space>**
+   * **Action:** Triggers **Scenario 3**.
+   * **Instructions:** Analyze the entirety of `<repo_name>`, fill out the master template, and publish the new master document to `<confluence_space>`.
+
+
+
 Example Prompts to trigger the specific scenarios:
 ​Scenario 1: "Run the tech-spec-architect skill. Update the Confluence spec for the Payment Service based on Jira ticket PAY-1042. The code is already merged."
 ​Scenario 2: "Run the tech-spec-architect skill. Draft a tech spec for the new Notification module described in JIRA-881. Analyze the develop branch of the notification-service repo to figure out where the hooks need to go."
