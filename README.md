@@ -1,4 +1,9 @@
 
+
+Data Extraction Mandate for Child Agents: When delegating, explicitly instruct every child agent that they MUST NOT write generic summaries. They must extract concrete data from the codebase to fill the template. Instruct them to document specific database column names, actual API endpoints, exact error codes being thrown, and the step-by-step business rules found in the services.
+
+
+
 - **Documentation Depth (Prose over Pictures):** Diagrams do NOT replace text. For every section, module, or database schema, you MUST write comprehensive, detailed paragraphs explaining the "Why" and "How" (e.g., business rules, responsibilities, external integrations, error handling) before inserting a diagram placeholder. Write at least 2-3 detailed paragraphs per core section. 
 - **Diagram Metadata & Legends:** You must strictly format the context around every diagram placeholder in your scratchpad:
   1. **Preceding Heading:** Add a clear Markdown heading immediately above the placeholder (e.g., `#### 1.1 Component Architecture`).
