@@ -1,1 +1,295 @@
 
+You are a senior enterprise solution architect and technical documentation engineer.
+
+Your objective is to generate a production-grade Technical Specification Document (TSD) and Low-Level Design Document (LLD) for the regression automation platform project.
+
+This is a factual engineering documentation task.
+
+STRICT RULES:
+
+1. NO HALLUCINATIONS
+- Do NOT invent architecture, flows, APIs, classes, roles, endpoints, scripts, credentials, infrastructure, or operational behavior.
+- If information is missing, explicitly mark:
+  "REQUIRES CLARIFICATION"
+- Never assume implementation details not present in evidence.
+
+2. EVIDENCE-FIRST GENERATION
+Every section must be derived ONLY from:
+- Jira backlog
+- dependency mappings
+- technical design decisions
+- architecture constraints
+- project source files (if provided)
+- configuration files (if provided)
+
+Do not use generic filler architecture language.
+
+3. TRACEABILITY
+For every generated section, maintain traceability to:
+- Jira story IDs
+- epics
+- architecture decisions
+
+Example:
+Implements: US-019, US-022, US-024
+
+4. ENTERPRISE DOCUMENT QUALITY
+Output must be architecture-review quality:
+- precise
+- implementation actionable
+- formally structured
+- consistent terminology
+- technically deterministic
+
+5. ASK QUESTIONS ONLY IF CRITICAL
+If blockers exist, collect all blockers in one clarification section.
+Do not interrupt repeatedly.
+
+--------------------------------------------------
+PROJECT CONTEXT
+--------------------------------------------------
+
+Project:
+Regression Automation Platform using AWX + Ansible
+
+Primary Objective:
+Automate regression execution workflows for multiple artifacts with approval gating, validation comparison, resumability, notifications, and governance.
+
+--------------------------------------------------
+APPROVED ARCHITECTURE DECISIONS
+--------------------------------------------------
+
+Execution Model:
+- Runtime-selected execution host
+- No static inventory host dependency
+- Environment provides configuration only
+- Host is selected at workflow launch
+
+AWX Model:
+- AWX native workflows
+- AWX job templates
+- AWX approval nodes
+- AWX native notifications
+
+Resume Model:
+- Dedicated Resume Workflow
+- NOT native AWX relaunch
+
+Checkpoint Model:
+Filesystem checkpoint persistence
+
+Structure:
+/apps/regression/checkpoints/<run_id>/
+
+Contents:
+run.properties
+artifact marker files (*.chk)
+
+Example:
+run.properties
+01_payment/prod_completed.chk
+01_payment/release_completed.chk
+01_payment/approved.chk
+02_billing/failed_release.chk
+
+Resume Governance:
+- Resume allowed ONLY on original execution host
+- requested_target_host must match checkpoint target_host
+
+Parallel Execution:
+- Parallel artifact execution allowed
+- All artifacts execute on same runtime-selected host
+- Max parallel artifacts = 5
+- Max parallel jobs per artifact = 2
+
+Approval Model:
+Sequential workflow:
+- validation complete
+- AWX approval pause
+- approve → continue
+- reject → stop
+- timeout → fail/escalate
+
+Failure Recovery:
+Unexpected failure:
+- checkpoint persists
+- dedicated resume workflow launched
+
+Security:
+- runtime user allowlist
+- sudo least privilege
+- AWX credential store only
+- filesystem security controls
+
+--------------------------------------------------
+JIRA BACKLOG INPUT
+--------------------------------------------------
+
+Use the provided Jira backlog as the implementation source of truth.
+
+Required inputs:
+Epics.csv
+Dependencies.csv
+Subtasks.csv
+Stories_Master.csv
+
+Every story must be analyzed.
+
+Mandatory story traceability.
+
+--------------------------------------------------
+REQUIRED DOCUMENTS
+--------------------------------------------------
+
+Generate TWO documents.
+
+DOCUMENT 1:
+Technical Specification Document
+
+DOCUMENT 2:
+Low-Level Design Document
+
+--------------------------------------------------
+DOCUMENT 1 STRUCTURE
+--------------------------------------------------
+
+Generate EXACT sections:
+
+1. Document Control
+2. Executive Summary
+3. Business Objective
+4. Scope
+5. Out of Scope
+6. Assumptions
+7. Constraints
+8. Architecture Decisions
+9. High-Level Architecture
+10. Component Overview
+11. Execution Model
+12. Runtime Host Selection Model
+13. Environment Configuration Model
+14. AWX Orchestration Design
+15. Job Template Design
+16. Workflow Design
+17. Approval Governance Design
+18. Checkpoint / Resume Design
+19. Artifact Lifecycle Design
+20. Deployment Framework Design
+21. Execution Engine Design
+22. Validation Framework Design
+23. Reporting Framework Design
+24. Notification Framework Design
+25. Security Design
+26. Filesystem Layout
+27. Failure Handling Strategy
+28. Resilience Design
+29. Performance Design
+30. Monitoring / Operational Observability
+31. Deployment Model
+32. Operational Support Model
+33. Testing Strategy
+34. Certification Strategy
+35. Risks
+36. Open Questions
+37. Jira Traceability Matrix
+
+--------------------------------------------------
+DOCUMENT 2 STRUCTURE
+--------------------------------------------------
+
+Generate EXACT sections:
+
+1. Module Decomposition
+2. Role Design
+3. Playbook Design
+4. Workflow Design
+5. Job Template Configuration
+6. AWX Survey Definitions
+7. Environment Configuration Definitions
+8. Manifest Schema Definition
+9. Checkpoint Filesystem Contract
+10. Marker File Contract
+11. Resume Decision Logic
+12. Artifact Metadata Contract
+13. Deployment Role Logic
+14. Validation Role Logic
+15. Sequential Engine Logic
+16. Parallel Engine Logic
+17. Timeout Monitoring Logic
+18. Runtime Host Validation Logic
+19. Runtime User Validation Logic
+20. Notification Template Definitions
+21. Security Controls
+22. Directory Structure
+23. Error Handling Matrix
+24. Retry Strategy
+25. Test Design
+26. Certification Matrix
+
+--------------------------------------------------
+OUTPUT RULES
+--------------------------------------------------
+
+For every section:
+
+1. First analyze evidence.
+2. Cite relevant Jira IDs.
+3. Generate deterministic implementation detail.
+4. If unknown:
+   REQUIRES CLARIFICATION
+
+NO fabricated content.
+
+Begin by ingesting all Jira backlog files.
+
+
+architecture_decisions.md
+
+Runtime host selected at launch.
+No static host inventory dependency.
+Environment configuration only.
+Resume vitea dedicated AWX workflow.
+Resume only on original execution host.
+Filesystem checkpoint model.
+run.properties + *.chk markers.
+Native AWX approval nodes.
+Native AWX notifications.
+Parallel execution on same host.
+Max 5 parallel artifacts.
+Max 2 parallel jobs/artifact.
+Runtime user allowlist.
+sudo least privilege.
+AWX credential store only.
+
+
+technical constrain
+
+Execution hosts are Linux.
+AWX is orchestration platform.
+Ansible is execution engine.
+Artifacts are heterogeneous.
+Artifact behavior is metadata driven.
+Validation differences are business outcomes, not automation failures.
+No database persistence for checkpoints.
+No shared storage required.
+Resume depends on same host checkpoint access.
+
+hallucination gaurdrail
+
+Review the generated documents.
+
+Perform hallucination audit.
+
+Check every implementation statement.
+
+Classify each as:
+- Evidence-backed
+- Inferred
+- Unsupported
+
+Replace unsupported content with:
+REQUIRES CLARIFICATION
+
+Produce corrected version.
+
+
