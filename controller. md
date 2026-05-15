@@ -292,4 +292,316 @@ REQUIRES CLARIFICATION
 
 Produce corrected version.
 
+stage 1
+
+You are a senior enterprise solution architect.
+
+Your first task is ONLY to ingest project implementation inputs and build an internal architecture knowledge model.
+
+DO NOT generate technical specification yet.
+
+OBJECTIVE:
+Understand the project completely and create a deterministic architecture knowledge map.
+
+STRICT RULES:
+- No hallucinations
+- No assumptions
+- If ambiguity exists, explicitly flag it
+- Use ONLY supplied project evidence
+
+INPUTS:
+- Epics.csv
+- Dependencies.csv
+- Subtasks.csv
+- Stories_Master.csv
+- architecture_decisions.md
+- technical_constraints.md
+
+TASKS:
+
+1. Parse ALL Jira stories.
+2. Extract:
+   - business objectives
+   - architectural components
+   - workflows
+   - runtime constraints
+   - integrations
+   - security requirements
+   - operational requirements
+   - testing requirements
+   - deployment requirements
+
+3. Build architecture knowledge map.
+
+REQUIRED OUTPUT:
+
+A. Executive project understanding
+
+B. Component inventory
+Example:
+- AWX workflow engine
+- job templates
+- artifact pipeline
+- manifest validator
+- runtime host validator
+- checkpoint manager
+- resume dispatcher
+- validation engine
+- notification framework
+
+C. Workflow inventory
+Example:
+- sequential workflow
+- parallel workflow
+- resume workflow
+
+D. Integration inventory
+Example:
+- Artifactory
+- SMTP
+- Linux execution hosts
+
+E. Architectural decision inventory
+
+F. Risk / ambiguity inventory
+
+G. Missing information requiring clarification
+
+H. Jira traceability summary
+
+DO NOT generate implementation documents yet.
+
+-- 2
+
+Using the architecture knowledge map created earlier, generate the authoritative architecture model.
+
+STRICT RULES:
+- No hallucinations
+- No invented infrastructure
+- No invented APIs
+- No generic filler
+
+TASKS:
+
+1. Identify architecture layers:
+   - control plane
+   - orchestration
+   - execution
+   - validation
+   - reporting
+   - persistence
+   - security
+   - operations
+
+2. Define component responsibilities.
+
+3. Define interaction boundaries.
+
+4. Define deployment topology.
+
+5. Define execution models:
+   - sequential
+   - parallel
+   - resume
+
+6. Define governance models:
+   - approvals
+   - notifications
+   - runtime user governance
+   - host governance
+   - filesystem governance
+
+REQUIRED OUTPUT:
+
+A. Layered architecture model
+
+B. Component responsibility matrix
+
+C. Integration interaction matrix
+
+D. Runtime execution model
+
+E. Failure recovery model
+
+F. Security architecture model
+
+G. Operational support model
+
+H. Jira traceability mapping
+
+This output becomes the architecture baseline for all subsequent documentation.
+
+--3
+
+Using the approved architecture model and Jira implementation backlog, generate the Technical Specification Document.
+
+STRICT RULES:
+- no hallucinations
+- no assumptions
+- deterministic implementation content only
+- cite Jira traceability for each section
+- if missing data:
+  REQUIRES CLARIFICATION
+
+GENERATE EXACT STRUCTURE:
+
+1. Document Control
+2. Executive Summary
+3. Business Objective
+4. Scope
+5. Out of Scope
+6. Assumptions
+7. Constraints
+8. Architecture Decisions
+9. High-Level Architecture
+10. Component Overview
+11. Runtime Execution Model
+12. Runtime Host Selection Model
+13. Environment Configuration Model
+14. AWX Orchestration Design
+15. Job Template Design
+16. Workflow Design
+17. Sequential Execution Model
+18. Parallel Execution Model
+19. Approval Governance Design
+20. Checkpoint / Resume Design
+21. Artifact Lifecycle Design
+22. Deployment Framework Design
+23. Validation Framework Design
+24. Reporting Framework Design
+25. Notification Framework Design
+26. Security Design
+27. Filesystem Layout
+28. Failure Handling Strategy
+29. Resilience Design
+30. Monitoring Strategy
+31. Deployment Model
+32. Operational Support Model
+33. Testing Strategy
+34. Certification Strategy
+35. Risks
+36. Open Questions
+37. Jira Traceability Matrix
+
+Document quality:
+enterprise architecture review quality.
+
+--4
+
+Using the approved architecture baseline and Jira backlog, generate the Low-Level Design document.
+
+STRICT RULES:
+- deterministic engineering detail only
+- no hallucinations
+- no invented source code
+- if uncertain:
+  REQUIRES CLARIFICATION
+
+GENERATE EXACT STRUCTURE:
+
+1. Module Decomposition
+2. Role Design
+3. Playbook Design
+4. Job Template Design
+5. Workflow Design
+6. AWX Survey Definitions
+7. Environment Configuration Definitions
+8. Manifest Schema Contract
+9. Runtime Host Validation Logic
+10. Runtime User Validation Logic
+11. Filesystem Checkpoint Contract
+12. Marker File Contract
+13. Resume Decision Logic
+14. Artifact Metadata Contract
+15. Cleanup Role Logic
+16. Precheck Role Logic
+17. Deployment Role Logic
+18. Sanity Role Logic
+19. Execution Engine Logic
+20. Sequential Engine Logic
+21. Parallel Engine Logic
+22. Timeout Monitoring Logic
+23. Validation Role Logic
+24. Reporting Logic
+25. Notification Template Logic
+26. Error Handling Matrix
+27. Retry Strategy
+28. Security Controls
+29. Directory Structure
+30. Test Design
+31. Certification Matrix
+
+REQUIRE:
+implementation-ready engineering detail.
+
+--5
+
+Using the approved architecture and LLD, generate Mermaid architecture diagrams.
+
+STRICT RULES:
+No invented components.
+
+GENERATE:
+
+1. High-Level Architecture Diagram
+2. Deployment Topology Diagram
+3. Component Interaction Diagram
+4. Sequential Workflow Diagram
+5. Parallel Workflow Diagram
+6. Resume Workflow Diagram
+7. Approval Governance Flow
+8. Artifact Lifecycle Flow
+9. Checkpoint State Transition Diagram
+10. Failure Recovery Decision Tree
+11. Notification Interaction Sequence
+12. Security Architecture Diagram
+
+Output:
+Mermaid syntax only.
+
+
+--6
+Audit the generated Technical Specification and LLD.
+
+For every implementation statement classify:
+
+- Evidence-backed
+- Reasonable inference
+- Unsupported hallucination
+
+Rules:
+Unsupported content must be removed.
+
+Replace unsupported content with:
+REQUIRES CLARIFICATION
+
+Produce:
+1. audit report
+2. corrected document set
+3. ambiguity register
+
+--7
+Validate consistency between:
+
+- Jira backlog
+- architecture model
+- technical specification
+- low-level design
+- diagrams
+
+Check for:
+- missing Jira coverage
+- contradictory workflows
+- invalid dependencies
+- architecture mismatches
+- resume model inconsistency
+- approval model inconsistency
+- host model inconsistency
+- security gaps
+
+Produce:
+gap analysis report.
+
+--8
+
 
