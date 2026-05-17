@@ -246,3 +246,54 @@ Story,US-041,Configure sudo Privilege Escalation Governance,Security & Runtime G
 Story,US-043,Implement Execution Filesystem Security Controls,Security & Runtime Governance,5,"Security;Filesystem;Checkpoint","Wave-4;Security","Business objective: protect filesystem-based execution evidence and checkpoint state. Technical implementation: secure checkpoint root, output directories, backup directories, and marker file structures. Protect /apps/regression/checkpoints, /apps/regression/output, /apps/regression/backups with controlled permissions and operational governance.","Given checkpoint filesystem model is active, when runtime users and AWX access directories, then authorized access succeeds and unauthorized access is blocked.","Filesystem paths finalized; runtime governance approved.","Filesystem security implemented and reviewed.","US-002;US-041","US-047","Implement directory hardening;Validate access control"
 
 Story,US-051,Create Platform Deployment Runbook,Documentation & Operational Readiness,5,"Documentation;Operations;Deployment","Wave-4;Runbooks","Business objective: provide repeatable deployment guidance aligned with revised architecture. Technical implementation: document environment configuration framework, AWX survey configuration, runtime host governance, checkpoint filesystem model, resume workflow usage, sudo governance, execution directory setup, and operational onboarding. Remove static inventory host assumptions.","Given operations follows the runbook in a clean environment, when platform setup is performed, then deployment completes without undocumented assumptions.","Architecture finalized; implementation stable.","Runbook completed and dry-run validated.","Wave 3 complete;Wave 4A complete","US-054","Document runtime host model;Document resume model;Dry-run validation"
+
+US-001   | 18-May | 18-May
+US-002   | 18-May | 19-May
+US-003   | 18-May | 19-May
+US-004   | 19-May | 20-May
+US-005   | 19-May | 20-May
+US-008   | 20-May | 22-May
+US-006   | 21-May | 22-May
+US-007   | 22-May | 23-May
+US-002A  | 21-May | 23-May
+US-040   | 23-May | 24-May
+
+US-013   | 23-May | 25-May
+US-021   | 25-May | 27-May
+US-014   | 25-May | 26-May
+US-015   | 26-May | 27-May
+US-016   | 27-May | 28-May
+US-017   | 28-May | 29-May
+US-020   | 27-May | 30-May
+US-018   | 29-May | 31-May
+
+US-023   | 24-May | 30-May
+US-024   | 28-May | 31-May
+US-025   | 31-May | 02-Jun
+US-019   | 01-Jun | 05-Jun
+
+US-026   | 01-Jun | 04-Jun
+US-027   | 03-Jun | 05-Jun
+US-028A  | 05-Jun | 06-Jun
+
+US-034   | 06-Jun | 08-Jun
+US-036   | 08-Jun | 11-Jun
+
+US-029   | 08-Jun | 09-Jun
+US-030   | 09-Jun | 10-Jun
+US-032   | 10-Jun | 12-Jun
+
+US-022   | 12-Jun | 14-Jun
+US-035   | 14-Jun | 16-Jun
+
+US-009   | 16-Jun | 17-Jun
+US-010   | 17-Jun | 19-Jun
+US-011   | 19-Jun | 20-Jun
+US-012   | 20-Jun | 22-Jun
+US-037   | 22-Jun | 24-Jun
+
+US-031   | 25-Jun | 26-Jun   (P1)
+US-039   | 26-Jun | 28-Jun   (P1)
+US-028   | 28-Jun | 30-Jun   (P1)
+
+BUFFER   | 24-Jun | 30-Jun
