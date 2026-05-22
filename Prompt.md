@@ -1,3 +1,17 @@
+We need to make our graph database a living reflection of the codebase. Please implement a background file watcher that automatically triggers the Tree-sitter ingestion process whenever the codebase changes.
+​Please execute the following:
+​Add the watchdog library to our dependencies.
+​Create a new service (e.g., file_watcher.py) that monitors the --repo-path directory.
+​The watcher should only care about events (modified, created, deleted) for .java, .xml, .properties, and .yml files.
+​Crucial Requirement: Implement a debounce mechanism (e.g., 2-3 seconds). IDEs auto-save frequently, and we do not want to trigger the parser 50 times a minute. Only trigger the ingestion function after the file modification events have paused.
+​Wire this watcher to start as a background daemon thread inside the mcp CLI command right after the initial startup ingestion completes, but before the MCP server's stdio communication loop begins.
+​Ensure this background process is thread-safe and does not block the main MCP server from listening to incoming commands.
+
+
+
+
+
+
 
 We are swapping out Memgraph for a local, embedded Neo4j database running on bolt://localhost:7687 with authentication disabled.
 ​Please refactor the codebase to completely remove the mgclient dependency and replace it with the official neo4j Python package (from neo4j import GraphDatabase).
