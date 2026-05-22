@@ -1,3 +1,21 @@
+We are converting this application into a lean, strict MCP server that uses Tree-sitter and Neo4j. We are abandoning all built-in LLM chat and semantic/vector search features.
+​Please execute the following refactoring:
+​The Purge: Ruthlessly delete all files, classes, and dependencies related to:
+​LLM clients (OpenAI, Gemini), API key validations, and prompt generation (e.g., the llm directory).
+​Semantic search, embeddings, UniXcoder, and vector stores.
+​Remove all AI/ML libraries from pyproject.toml or requirements.txt.
+​Startup Ingestion: We want the application to automatically ingest the codebase into Neo4j when the MCP server starts.
+​Modify the mcp command in the CLI (cli.py) to accept a --repo-path argument.
+​Before starting the MCP server's stdio loop, the mcp command must initialize the database adapter, instantiate the ingestor, and run the Tree-sitter ingestion process on the provided --repo-path.
+​Only after the ingestion is complete should it call the mcp_server.run() or equivalent method to begin listening for Roo Code.
+​Do not alter the Neo4j database connection strings or the core Tree-sitter logic we established earlier.
+
+
+
+
+
+
+
 We need to make our graph database a living reflection of the codebase. Please implement a background file watcher that automatically triggers the Tree-sitter ingestion process whenever the codebase changes.
 ​Please execute the following:
 ​Add the watchdog library to our dependencies.
