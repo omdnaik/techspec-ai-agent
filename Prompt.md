@@ -1,3 +1,12 @@
+We have two bugs to fix from our previous refactoring:
+​1. Fatal NameError (CypherGenerator):
+The MCP server is crashing on startup with NameError: name 'CypherGenerator' is not defined. Please search the MCP initialization files (likely in codebase_rag/mcp/server.py or where tools are registered) and completely remove any imports, instantiations, or tool bindings for CypherGenerator. The MCP server should only expose deterministic tools (like Cypher execution and Tree-sitter ingestion), no LLM generation tools.
+​2. Lost Database Connection on Relationships:
+During the sequential flush_relationships phase in codebase_rag/services/graph_service.py, we are getting WARNING: No database connection for relationship group... skipping flush. resulting in 0 successful relationships. Please check the session lifecycle in flush_relationships. Ensure the active Neo4j database connection/session is being kept open and passed correctly into the sequential execution loop so the UNWIND relationship queries actually reach the database.
+
+
+
+
 We are hitting a Neo.TransientError.Transaction.DeadlockDetected error during the flush_relationships phase.
 ​The logs show Parallel flushing 4 relationship groups with 4 workers. Neo4j is throwing deadlocks because multiple threads are trying to create relationships on the same nodes concurrently.
 ​Please update codebase_rag/services/graph_service.py to completely disable parallel execution for database flushes.
