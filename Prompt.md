@@ -1,3 +1,10 @@
+"We need to fundamentally refactor how the codebase indexer and MCP server handle file paths. Currently, the script is fragile because it relies on the current working directory, causing it to lose its cache and trigger a full, expensive re-index every time the MCP server starts.
+​Please execute the following architectural changes:
+1. Absolute Path Anchoring: Ensure that the --repo-path argument passed to the CLI is converted to an absolute pathlib.Path immediately. This absolute path must be passed down to the GraphUpdater, the file scanner, and the watchdog. Remove any reliance on os.getcwd() or implicit relative paths.
+2. Fix the Hash Cache Location: The .cgr-hash-cache.json file must be saved explicitly inside the absolute --repo-path directory, nowhere else.
+3. Startup Sequence: When the MCP server boots up, it should trigger an incremental sync (using the correctly located cache file) before starting the standard stdio loop. Because the cache path is now fixed, this should be a lightning-fast delta check, not a full re-index, allowing the server to quickly catch up on any offline IDE changes without bogging down the system."
+
+
 Your assessment of the MCP server is 100% correct. The tools are failing because their definitions still expect the old LLM-based architecture that we deleted. We need to refactor the tool signatures in the Python backend (likely in codebase_rag/mcp/tools.py or server.py).
 ​Please execute the following fixes:
 1. Fix index_repository: Remove the call to _cleanup_project_embeddings inside the tool's execution logic.
