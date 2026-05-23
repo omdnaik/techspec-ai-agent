@@ -1,15 +1,14 @@
-{
-  "mcpServers": {
-    "local-spring-architect": {
-      "command": "C:\\a66159\\vscode-repo\\code_graph_rag\\.venv\\Scripts\\python.exe",
-      "args": [
-        "-m",
-        "codebase_rag.cli",
-        "mcp-server",
-        "--repo-path",
-        "C:\\a66159\\vscode-repo\\splitcro\\splitcro"
-      ]
-    }
+"local-spring-architect": {
+  "command": "C:\\a66159\\vscode-repo\\code_graph_rag\\.venv\\Scripts\\python.exe",
+  "args": [
+    "-m",
+    "codebase_rag.cli",
+    "mcp-server",
+    "--repo-path",
+    "C:\\a66159\\vscode-repo\\splitcro\\splitcro"
+  ],
+  "env": {
+    "PYTHONPATH": "C:\\a66159\\vscode-repo\\code_graph_rag"
   }
 }
 
