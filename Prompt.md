@@ -1,3 +1,13 @@
+We are hitting a Neo.TransientError.Transaction.DeadlockDetected error during the flush_relationships phase.
+​The logs show Parallel flushing 4 relationship groups with 4 workers. Neo4j is throwing deadlocks because multiple threads are trying to create relationships on the same nodes concurrently.
+​Please update codebase_rag/services/graph_service.py to completely disable parallel execution for database flushes.
+​Locate the flush_relationships and flush_nodes methods (or wherever the ThreadPoolExecutor / parallel workers are defined).
+​Remove the multithreading logic.
+​Refactor it to use standard, sequential for loops to execute the batches one after the other synchronously.
+We prioritize stability over parallel speed to avoid Neo4j transaction locks.
+
+
+
 
 The node batching is working perfectly, but we are getting a ParameterMissing: Expected parameter(s): batch_data error during flush_relationships.
 ​Please check codebase_rag/services/graph_service.py, specifically around the flush_relationships logic or any _execute_relationship_batch methods.
