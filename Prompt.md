@@ -1,3 +1,21 @@
+{
+  "mcpServers": {
+    "local-spring-architect": {
+      "command": "C:\\a66159\\vscode-repo\\code_graph_rag\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "codebase_rag.cli",
+        "mcp-server",
+        "--repo-path",
+        "C:\\a66159\\vscode-repo\\splitcro\\splitcro"
+      ]
+    }
+  }
+}
+
+
+
+
 We have two bugs to fix from our previous refactoring:
 ​1. Fatal NameError (CypherGenerator):
 The MCP server is crashing on startup with NameError: name 'CypherGenerator' is not defined. Please search the MCP initialization files (likely in codebase_rag/mcp/server.py or where tools are registered) and completely remove any imports, instantiations, or tool bindings for CypherGenerator. The MCP server should only expose deterministic tools (like Cypher execution and Tree-sitter ingestion), no LLM generation tools.
