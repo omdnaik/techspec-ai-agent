@@ -1,3 +1,6 @@
+
+Our MCP server is successfully connected, but we need to ensure the JSON-RPC stream doesn't get corrupted by our background logging. Please open codebase_rag/logs.py (or wherever loguru or the standard logger is configured). Ensure that all logging output is explicitly directed to sys.stderr and NOT sys.stdout. We must guarantee sys.stdout remains perfectly clean for the MCP protocol.
+
 "local-spring-architect": {
   "command": "C:\\a66159\\vscode-repo\\code_graph_rag\\.venv\\Scripts\\python.exe",
   "args": [
