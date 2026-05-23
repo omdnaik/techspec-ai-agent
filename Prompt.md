@@ -1,4 +1,10 @@
 
+The node batching is working perfectly, but we are getting a ParameterMissing: Expected parameter(s): batch_data error during flush_relationships.
+​Please check codebase_rag/services/graph_service.py, specifically around the flush_relationships logic or any _execute_relationship_batch methods.
+The Cypher queries for relationships have been updated to use UNWIND $batch_data AS row, but the Python session.run() call is failing to pass the batch_data argument. Ensure that wherever relationship queries are executed, the list of parameters is explicitly passed as batch_data=params (or whatever the list variable is named) in the session.run() call so the query receives the data
+
+
+
 We have one more migration bug to squash in codebase_rag/services/graph_service.py.
 ​The _execute_batch_on method (around line 177) is throwing a null property value error. Neo4j's session.run() drops the data because it expects a single dictionary of parameters, but the current code is passing a list of dictionaries (the old Memgraph behavior).
 ​Please refactor _execute_batch_on (and any related batch methods) to use the Neo4j UNWIND batching standard. Update the Cypher queries in these methods to use UNWIND $batch_data AS row, and explicitly pass the list in the execution call as session.run(query, batch_data=params). Ensure the parameter mapping aligns perfectly so row.id and row.props evaluate correctly to fix the null property inserts.
