@@ -1,3 +1,11 @@
+Your assessment of the MCP server is 100% correct. The tools are failing because their definitions still expect the old LLM-based architecture that we deleted. We need to refactor the tool signatures in the Python backend (likely in codebase_rag/mcp/tools.py or server.py).
+​Please execute the following fixes:
+1. Fix index_repository: Remove the call to _cleanup_project_embeddings inside the tool's execution logic.
+2. Refactor query_code_graph: Change the parameter schema. It currently accepts natural_language_query. Change this to accept a cypher_query string parameter instead. The underlying Python function should simply take this cypher_query, execute it directly against Neo4j using the graph service, and return the raw JSON result.
+3. Update your own behavior: Once you apply these fixes to the Python backend, you must change how you use this tool. You are now the 'brain'. When you want to search the codebase, YOU must write a valid Neo4j 5 Cypher query based on our Tree-sitter schema, and pass that raw Cypher to the query_code_graph tool.
+
+
+
 Our MCP server is connected, but the tool calls are crashing with two specific errors caused by dangling references from our earlier purge of the semantic/LLM features:
 ​Error indexing repository: name 'delete_project_embeddings' is not defined.
 ​Error querying code graph: 'NoneType' object has no attribute 'function' (Traceback points to typer/main.py and cli.py).
