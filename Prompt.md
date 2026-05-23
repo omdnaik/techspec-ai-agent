@@ -1,3 +1,12 @@
+The user experience for querying the graph is currently too manual. I shouldn't have to prompt you with the schema every time. We need to make the MCP tools self-documenting.
+​Please open the Python file where the MCP tools are registered (likely codebase_rag/mcp/server.py or codebase_rag/mcp/tools.py).
+Update the description/docstring for the query_code_graph tool to be extremely detailed. It MUST include the following instructions for the AI agent:
+​'Use this tool to execute raw Neo4j 5 Cypher queries against the codebase AST graph.'
+​'Available Node Labels: File, Class, Method, Interface, Annotation.'
+​'Available Relationships: HAS_CLASS, HAS_METHOD, IMPLEMENTS, EXTENDS, HAS_ANNOTATION.'
+​'Rule: Do not guess file paths. Always use precise Cypher queries targeting these labels and relationships to find architectural components.
+
+
 "We need to fundamentally refactor how the codebase indexer and MCP server handle file paths. Currently, the script is fragile because it relies on the current working directory, causing it to lose its cache and trigger a full, expensive re-index every time the MCP server starts.
 ​Please execute the following architectural changes:
 1. Absolute Path Anchoring: Ensure that the --repo-path argument passed to the CLI is converted to an absolute pathlib.Path immediately. This absolute path must be passed down to the GraphUpdater, the file scanner, and the watchdog. Remove any reliance on os.getcwd() or implicit relative paths.
