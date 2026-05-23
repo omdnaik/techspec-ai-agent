@@ -1,3 +1,14 @@
+We are hitting a syntax error during the database initialization because the backend is Neo4j 5, not Memgraph. Neo4j 5 has deprecated the legacy index creation syntax.
+​Please update codebase_rag/services/graph_service.py:
+​Find the _ensure_indexes() method (or wherever the index queries are defined).
+​Change all index creation strings from the legacy Memgraph format (CREATE INDEX ON :Label(property)) to the Neo4j 5 format (CREATE INDEX FOR (n:Label) ON (n.property)).
+​Please also check the _ensure_constraints() method. Ensure any constraint creation strings use the Neo4j 5 format (e.g., CREATE CONSTRAINT FOR (n:Label) REQUIRE n.property IS UNIQUE) instead of legacy syntax.
+​Do not change the standard MERGE or MATCH logic, only the DDL index/constraint setup queries."
+
+
+
+
+
 We are converting this application into a lean, strict MCP server that uses Tree-sitter and Neo4j. We are abandoning all built-in LLM chat and semantic/vector search features.
 ​Please execute the following refactoring:
 ​The Purge: Ruthlessly delete all files, classes, and dependencies related to:
