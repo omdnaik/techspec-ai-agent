@@ -1,3 +1,12 @@
+Our MCP server is connected, but the tool calls are crashing with two specific errors caused by dangling references from our earlier purge of the semantic/LLM features:
+​Error indexing repository: name 'delete_project_embeddings' is not defined.
+​Error querying code graph: 'NoneType' object has no attribute 'function' (Traceback points to typer/main.py and cli.py).
+​Please execute the following fixes:
+​Fix 1: Search the codebase (specifically codebase_rag/mcp/tools.py, codebase_rag/graph_updater.py, or codebase_rag/tools/) for any lingering calls to delete_project_embeddings or vector-related sync logic and remove them completely. The tools must only rely on deterministic Neo4j AST queries.
+​Fix 2: Check codebase_rag/cli.py and codebase_rag/mcp/server.py. Look for any stranded @app.command() decorators in the CLI, or stranded @mcp_server.tool() decorators that are missing their underlying functions. Ensure all registered MCP tools (like get_code_snippet and query_code_graph) are fully defined and properly point to valid, non-LLM Python functions.
+
+
+
 
 Our MCP server is successfully connected, but we need to ensure the JSON-RPC stream doesn't get corrupted by our background logging. Please open codebase_rag/logs.py (or wherever loguru or the standard logger is configured). Ensure that all logging output is explicitly directed to sys.stderr and NOT sys.stdout. We must guarantee sys.stdout remains perfectly clean for the MCP protocol.
 
