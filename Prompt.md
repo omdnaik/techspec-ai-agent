@@ -1,3 +1,12 @@
+
+We have one more migration bug to squash in codebase_rag/services/graph_service.py.
+​The _execute_batch_on method (around line 177) is throwing a null property value error. Neo4j's session.run() drops the data because it expects a single dictionary of parameters, but the current code is passing a list of dictionaries (the old Memgraph behavior).
+​Please refactor _execute_batch_on (and any related batch methods) to use the Neo4j UNWIND batching standard. Update the Cypher queries in these methods to use UNWIND $batch_data AS row, and explicitly pass the list in the execution call as session.run(query, batch_data=params). Ensure the parameter mapping aligns perfectly so row.id and row.props evaluate correctly to fix the null property inserts.
+
+
+
+
+
 We are hitting a syntax error during the database initialization because the backend is Neo4j 5, not Memgraph. Neo4j 5 has deprecated the legacy index creation syntax.
 ​Please update codebase_rag/services/graph_service.py:
 ​Find the _ensure_indexes() method (or wherever the index queries are defined).
