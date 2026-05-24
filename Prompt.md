@@ -1,3 +1,10 @@
+
+The MCP server is still completely hardcoded to Python. The startup logs continue to output Successfully loaded python grammar and Initialized parsers for: python across both the batch indexer and the MCP daemon.
+​You must perform a project-wide search for the string python inside initialization calls (specifically check codebase_rag/mcp/server.py, CodeRetriever, GraphUpdater, and cli.py). Replace the default language argument with java so it explicitly loads the tree-sitter-java grammar on startup.
+
+
+
+
 I am reviewing the startup logs for the MCP server. The absolute pathing and incremental sync are working perfectly. However, there is a major issue with the language detection.
 ​The logs show Successfully loaded python grammar. and Initialized parsers for: python, followed by Found 0 functions/methods in codebase. It is completely ignoring the Java parser we built in Phase 3, even though it is scanning a directory full of .java files.
 ​Please fix the parser routing logic (likely in GraphUpdater, CodeRetriever, or the main server initialization):
