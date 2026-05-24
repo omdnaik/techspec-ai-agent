@@ -1,3 +1,32 @@
+We are executing Phase 3 (Graph Enrichment) for our local Neo4j MCP server. The target repositories are a hybrid ecosystem: some are headless, Autosys-scheduled Spring intraday jobs, while others are active Spring Boot web applications. The codebase heavily utilizes Lombok, explicit Spring Core configuration, and JPA.
+​Please update the Tree-sitter Java extraction logic (likely in codebase_rag/parsers/java_parser.py or similar) to build a unified, explicit architectural schema. Extract the following metadata and enrich the Neo4j node properties and relationships:
+​1. The "Catch-All" Annotation Metadata (For AOP & Custom Tags)
+​For EVERY Class, Method, and Field parsed, extract the names of ALL annotations present (e.g., @Transactional, @Retryable, custom internal tags) and store them as an array of strings in a property called all_annotations on the respective Neo4j node.
+​Extract any primitive key-value arguments from these annotations and store them as a JSON string or map property called annotation_arguments.
+​2. Entry Points & Job Config (Headless Autosys Jobs)
+​Identify classes implementing CommandLineRunner or ApplicationRunner and add a boolean property is_runner: true to the Class node.
+​Extract values from @ConditionalOnProperty and @Profile annotations and attach them as properties to the class node to track environment-specific bean loading.
+​3. Web Endpoints (Spring Web)
+​Identify classes annotated with @RestController or @Controller and add a boolean property is_web_controller: true.
+​For methods inside these classes, extract HTTP routing annotations (@GetMapping, @PostMapping, etc.). Extract the actual URL path string (e.g., "/api/v1/resource") and the HTTP verb, attaching them as properties (http_method, http_path) directly to the Neo4j Method node.
+​4. Lombok & Constructor Injection
+​Capture Lombok annotations (e.g., @Data, @Builder, @RequiredArgsConstructor, @Slf4j) and store them in a list property lombok_annotations on the Class node.
+​Crucial: If a class has @RequiredArgsConstructor or @AllArgsConstructor, identify all private final fields. Create INJECTS relationships from this class to the types of those final fields to properly map implicit constructor injection.
+​5. Explicit Spring Core Wiring
+​Field/Setter Injection: Identify fields or setter methods annotated with @Autowired or @Inject. Create an INJECTS relationship from the parent Class node to the type of that field/parameter.
+​Qualifiers: If an injected field also has a @Qualifier("beanName") annotation, extract the string value and attach it as a property qualifier on the INJECTS relationship edge.
+​Properties: Extract @Value annotation string values (e.g., ${my.property.key}) and attach them as an array property injected_properties on the Class node.
+​Stereotypes: Capture classes annotated with @Service, @Component, or @Repository and attach a boolean property is_spring_bean: true and a string property bean_type (e.g., 'Service') to the Class node. Map @Configuration classes and the return types of @Bean methods.
+​6. JPA Entity & Relational Boundaries
+​If a class has the @Entity annotation, add a boolean property is_jpa_entity: true.
+​If it has a @Table(name="my_table") annotation, extract the table name string and add it as a property db_table_name.
+​Identify fields annotated with @OneToMany, @ManyToOne, @OneToOne, or @ManyToMany. Create a specific graph relationship named HAS_ENTITY_RELATION from the parent Class node to the type of that field, adding a property relation_type to this edge storing the exact annotation used.
+​Execution Requirements
+​Please refactor the parser to execute this full enrichment strategy. Ensure the Neo4j database flush logic accommodates all these new node properties, arrays, and relationship edges. Finally, update the query_code_graph tool description to explicitly document these new properties and edges so the AI agent knows how to query them via Cypher.
+
+
+
+
 The user experience for querying the graph is currently too manual. I shouldn't have to prompt you with the schema every time. We need to make the MCP tools self-documenting.
 ​Please open the Python file where the MCP tools are registered (likely codebase_rag/mcp/server.py or codebase_rag/mcp/tools.py).
 Update the description/docstring for the query_code_graph tool to be extremely detailed. It MUST include the following instructions for the AI agent:
