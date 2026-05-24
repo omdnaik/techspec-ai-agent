@@ -1,3 +1,19 @@
+
+We are dealing with a completely swallowed exception. The Neo4j database flush is failing for Pass 2 (Classes and Methods), but absolutely nothing is being written to code_graph_rag.log or the terminal. The application is silently catching the error and pretending it succeeded.
+​Please strip the silencers from the Neo4j execution block immediately:
+​1. Locate the Flush Logic:
+Find the exact code where the Cypher queries for node ingestion are executed (look for tx.run() or session.execute_write() inside mixin.py, graph_service.py, or your database client layer).
+​2. Expose the Exception:
+Look at the try/except block wrapping this database call. Inside the except Exception as e: block, you must bypass the standard logger entirely.
+Add the following explicitly:
+import traceback
+print(f"CRITICAL NEO4J ERROR: {str(e)}")
+traceback.print_exc()
+​3. Force the Crash:
+Add raise e at the very end of the except block. Do not allow the loop to continue or pass. The application must hard-crash the moment Neo4j rejects a payload.
+
+
+
 The Java parser is working beautifully, but we hit a database crash during the flush phase due to a Neo4j property type constraint and a missing logging constant.
 ​Please implement these two fixes:
 ​1. Fix the Neo4j TypeError (Serialize Maps):
