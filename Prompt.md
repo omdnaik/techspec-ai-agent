@@ -1,3 +1,15 @@
+The MCP server is still booting up in Python mode. The terminal is literally printing the exact strings: Successfully loaded python grammar and Initialized parsers for: python.
+​You missed the upstream orchestrator. Please execute the following search and replace:
+​1. Grep the Logs:
+Perform a global workspace search for the exact string "Successfully loaded " or "Initialized parsers for:". Find the exact file (mcp/server.py, cli.py, GraphUpdater, or CodeRetriever) that is printing these logs.
+​2. Fix the Source:
+In that exact file, you will find the hardcoded python language variable being passed into the grammar initialization. Change it strictly to java.
+​3. Verify:
+Do not stop until you can confidently confirm that the MCP server startup sequence will print Successfully loaded java grammar instead of python.
+
+
+
+
 
 The MCP server is still completely hardcoded to Python. The startup logs continue to output Successfully loaded python grammar and Initialized parsers for: python across both the batch indexer and the MCP daemon.
 ​You must perform a project-wide search for the string python inside initialization calls (specifically check codebase_rag/mcp/server.py, CodeRetriever, GraphUpdater, and cli.py). Replace the default language argument with java so it explicitly loads the tree-sitter-java grammar on startup.
