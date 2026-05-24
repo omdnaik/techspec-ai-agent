@@ -1,3 +1,16 @@
+We have a critical bug in the CLI parameter passing. When executing python -m codebase_rag.cli mcp-server --repo-path "C:\Users\a66159\IdeaProjects\confirmations", the application completely ignores the provided repository path and mistakenly indexes the current working directory (code_graph_rag) instead.
+​Please perform a strict trace of the --repo-path argument to fix this:
+​1. Inspect the CLI Entry Point:
+Check codebase_rag/cli.py (or where the mcp-server command is defined). Ensure the --repo-path argument is correctly captured and explicitly passed into the MCP server initialization function.
+​2. Inspect the Server Initialization:
+Check codebase_rag/mcp/server.py (or the equivalent startup script). Verify that the server is receiving the repo_path variable and passing it directly to the indexing engine/scanner.
+​3. Eliminate the Fallback:
+Locate the indexing logic (likely GraphUpdater or the file scanner). It is currently defaulting to . or os.getcwd(). Remove this fallback entirely. The engine must strictly use the absolute pathlib.Path derived from the --repo-path CLI argument. If the argument is missing, it should throw an explicit error rather than silently defaulting to the current working directory.
+​Once Roo fixes this pipeline, the directory you run the command from will become completely irrelevant, and it will finally target your confirmations project! Let me know what Roo finds in cli.py.
+
+
+
+
 We are executing Phase 3 (Graph Enrichment) for our local Neo4j MCP server. The target repositories are a hybrid ecosystem: some are headless, Autosys-scheduled Spring intraday jobs, while others are active Spring Boot web applications. The codebase heavily utilizes Lombok, explicit Spring Core configuration, and JPA.
 ​Please update the Tree-sitter Java extraction logic (likely in codebase_rag/parsers/java_parser.py or similar) to build a unified, explicit architectural schema. Extract the following metadata and enrich the Neo4j node properties and relationships:
 ​1. The "Catch-All" Annotation Metadata (For AOP & Custom Tags)
