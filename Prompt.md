@@ -1,4 +1,18 @@
 
+The Neo4j database execution block is not throwing any errors, which means Python is either sending an empty payload or crashing before it even attempts the database flush.
+​Please implement the following strict diagnostic probes:
+​1. The Payload Size Probe:
+Locate the exact function where the Cypher ingestion is triggered for Classes and Methods (likely in mixin.py, graph_service.py, or Ingestor).
+Right before the database transaction (tx.run or session.execute_write) is called, explicitly print the size of the payload:
+print(f"DEBUG: Preparing to insert {len(classes_to_insert)} Classes and {len(methods_to_insert)} Methods into Neo4j")
+​2. The Upstream Serialization Trap:
+The json.dumps() serialization we added recently might be throwing a Python TypeError that is being swallowed by a higher-level loop, causing the flush to abort before reaching Neo4j. Wrap the entire data preparation and serialization loop in a raw try/except block with traceback.print_exc() and raise e.
+​3. Check for Leftover Language Filters:
+Check the aggregator or the ingestor that passes the parsed nodes to the database layer. Ensure there isn't a leftover hardcoded filter like if node.language == 'python': that is quietly discarding all the Java nodes before they reach the batch list.
+​Do not proceed until you can tell me exactly what the DEBUG: print statement outputs for the payload size."
+
+
+
 We need to refactor where the application stores its cache file. Currently, it generates the .cgr-hash-cache.json (or .cgr state files) directly inside the target repository being scanned (the --repo-path). This pollutes the target codebase.
 ​Please implement the following architectural change:
 ​1. Locate the Cache Path Logic:
