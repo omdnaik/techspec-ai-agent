@@ -1,3 +1,13 @@
+Your manual test just proved the root cause. When you ran load_parsers() directly, it loaded all 10 languages. But when the actual MCP server boots up, the logs ONLY say Initialized parsers for: python.
+​This means the MCP server initialization is explicitly passing a restricted language list to the loader, suppressing the Java parser we need.
+​1. Target the Server Boot Sequence: Look strictly in codebase_rag/mcp/server.py, codebase_rag/retrieval/code_retriever.py, or codebase_rag/graph/graph_updater.py (specifically inside their __init__ or startup functions).
+2. Find the Hardcoded Filter: Find where load_parsers() or the CodeRetriever / GraphUpdater class is being instantiated. You will find a hardcoded ['python'] list, a SupportedLanguage.PYTHON argument, or a default parameter overriding the languages.
+3. Fix It: Remove that restriction so it loads JAVA (or all available languages) during the actual mcp-server command execution."
+
+
+
+
+
 The MCP server is still booting up in Python mode. The terminal is literally printing the exact strings: Successfully loaded python grammar and Initialized parsers for: python.
 ​You missed the upstream orchestrator. Please execute the following search and replace:
 ​1. Grep the Logs:
