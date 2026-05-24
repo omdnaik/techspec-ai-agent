@@ -1,4 +1,18 @@
 
+We need to refactor where the application stores its cache file. Currently, it generates the .cgr-hash-cache.json (or .cgr state files) directly inside the target repository being scanned (the --repo-path). This pollutes the target codebase.
+​Please implement the following architectural change:
+​1. Locate the Cache Path Logic:
+Search the project for .cgr-hash-cache.json or .cgr. This is likely in GraphUpdater, CodeRetriever, or a configuration file handling file hashing.
+​2. Centralize the Cache Location:
+Change the path resolution so the cache file is saved in the root directory of the code_graph_rag application itself, NOT the target repository. (e.g., resolve it relative to __file__ or the tool's launch directory).
+​3. Prevent Cache Collisions:
+Since we will scan multiple different repositories with this tool, the cache file must be unique to the project being scanned. Modify the cache filename to include the target repository's folder name or a hash of the --repo-path.
+​Example: Instead of .cgr-hash-cache.json, generate .cgr_cache/confirmations_hash_cache.json inside the code_graph_rag root directory.
+​4. Clean Up:
+Ensure the cache loading, saving, and checking logic all strictly respect this new centralized path.
+
+
+
 We are dealing with a completely swallowed exception. The Neo4j database flush is failing for Pass 2 (Classes and Methods), but absolutely nothing is being written to code_graph_rag.log or the terminal. The application is silently catching the error and pretending it succeeded.
 ​Please strip the silencers from the Neo4j execution block immediately:
 ​1. Locate the Flush Logic:
