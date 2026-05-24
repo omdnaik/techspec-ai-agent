@@ -1,3 +1,14 @@
+I am reviewing the startup logs for the MCP server. The absolute pathing and incremental sync are working perfectly. However, there is a major issue with the language detection.
+​The logs show Successfully loaded python grammar. and Initialized parsers for: python, followed by Found 0 functions/methods in codebase. It is completely ignoring the Java parser we built in Phase 3, even though it is scanning a directory full of .java files.
+​Please fix the parser routing logic (likely in GraphUpdater, CodeRetriever, or the main server initialization):
+​Language Mapping: Ensure that when the scanner encounters a .java file extension, it explicitly loads and utilizes the tree-sitter-java grammar and the enriched Java parser logic we wrote for Spring/Lombok.
+​Initialization: Ensure the Java grammar is loaded successfully during the Initializing services... phase alongside or instead of the Python grammar.
+​We need to make sure the Tree-sitter engine actually applies our Phase 3 Java extraction rules to these files.
+
+
+
+
+
 We have a critical bug in the CLI parameter passing. When executing python -m codebase_rag.cli mcp-server --repo-path "C:\Users\a66159\IdeaProjects\confirmations", the application completely ignores the provided repository path and mistakenly indexes the current working directory (code_graph_rag) instead.
 ​Please perform a strict trace of the --repo-path argument to fix this:
 ​1. Inspect the CLI Entry Point:
