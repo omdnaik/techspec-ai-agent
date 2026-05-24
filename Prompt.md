@@ -1,4 +1,20 @@
 
+The ingestion pipeline is suffering from a massive N+1 database bottleneck. Capturing the IMPORTS relationships is taking over 1 second per import because it is executing a separate database transaction for every single line.
+​Please rewrite the relationship ingestion logic to use bulk batching:
+​1. Locate the Bottleneck: Find the exact function where the IMPORTS relationships (and any other relationships like CALLS or IMPLEMENTS) are being saved to Neo4j (likely in graph_service.py or the specific Cypher execution file).
+​2. Implement Memory Buffering: Stop calling tx.run() or session.execute_write() inside the loop. Instead, aggregate all the relationships into a Python list of dictionaries:
+batch_imports.append({'source_id': src, 'target_id': tgt})
+​3. Execute via UNWIND: Pass that entire list as a single parameter to Neo4j and use the UNWIND Cypher clause to insert them all in a single network round-trip.
+Example Cypher:
+UNWIND $batch_data AS rel
+MATCH (source {id: rel.source_id}), (target {id: rel.target_id})
+MERGE (source)-[:IMPORTS]->(target)
+
+Do not execute single MERGE statements for relationships anymore. Consolidate them into a bulk flush.
+
+
+
+
 The Neo4j database execution block is not throwing any errors, which means Python is either sending an empty payload or crashing before it even attempts the database flush.
 ​Please implement the following strict diagnostic probes:
 ​1. The Payload Size Probe:
