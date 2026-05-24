@@ -1,3 +1,14 @@
+The Java parser is working beautifully, but we hit a database crash during the flush phase due to a Neo4j property type constraint and a missing logging constant.
+​Please implement these two fixes:
+​1. Fix the Neo4j TypeError (Serialize Maps):
+Neo4j threw: Property values can only be of primitive types... Encountered: Map{}. The annotation_arguments property (and potentially others like decorators) is being passed as a raw Python dictionary.
+In the integration layer (likely parsers/class_ingest/mixin.py or where the props dictionary is assembled before the Cypher query), please use json.dumps() to serialize annotation_arguments (and any other dictionary payloads) into a flat JSON string before passing them to the Neo4j driver.
+​2. Fix the Error Handler Crash:
+When the exception occurred, the app crashed completely with: module 'codebase_rag.logs' has no attribute "MG_LABEL_FLUSH_ERROR".
+Please define MG_LABEL_FLUSH_ERROR in the appropriate logs.py or constants.py file so the exception handler can execute gracefully.
+
+
+
 Your manual test just proved the root cause. When you ran load_parsers() directly, it loaded all 10 languages. But when the actual MCP server boots up, the logs ONLY say Initialized parsers for: python.
 ​This means the MCP server initialization is explicitly passing a restricted language list to the loader, suppressing the Java parser we need.
 ​1. Target the Server Boot Sequence: Look strictly in codebase_rag/mcp/server.py, codebase_rag/retrieval/code_retriever.py, or codebase_rag/graph/graph_updater.py (specifically inside their __init__ or startup functions).
