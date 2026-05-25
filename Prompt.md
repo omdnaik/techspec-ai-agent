@@ -1,4 +1,17 @@
 
+The pipeline is now successfully parsing Java files and utilizing bulk batching (flushing thousands of CALLS and OVERRIDES instantly). The Pass 2 AST extraction is working perfectly.
+​However, Pass 3 (Spring Enrichment) is still completely missing from the execution flow. The logs show zero attempts to process or flush INJECTS relationships.
+​You must physically connect and execute the Spring logic:
+​1. Hook Up the Execution:
+​Locate the main orchestrator (likely server.py, CodeRetriever, or wherever the passes are executed sequentially).
+​Ensure the function that triggers the Spring Enrichment (analyzing annotations and constructor parameters to build INJECTS relationships) is explicitly called after Pass 2 finishes but before the final database flush.
+​2. Add the Flush Group:
+​Ensure the generated INJECTS relationships are actually added to the rel_groups batch buffer so they get flushed to Neo4j alongside CALLS and IMPORTS.
+​3. Add Execution Logs:
+​Add explicit logger.info("--- Pass 3: Processing Spring Dependencies ---") so we can see it executing in the terminal.
+​Do not touch Pass 2 or the Java AST Parser. Only focus on connecting the Pass 3 Spring logic to the main execution pipeline
+
+
 Pass 2 is successfully extracting Class, Method, and Field nodes with their annotations. However, Pass 3 (Spring Enrichment) is still not creating INJECTS relationships.
 ​Furthermore, the architectural logic has a critical blind spot: modern Spring Boot relies heavily on Constructor Injection, often without explicit @Autowired annotations.
 ​Please implement the following fixes across Pass 2 and Pass 3 immediately:
