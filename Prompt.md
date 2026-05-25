@@ -1,6 +1,7 @@
-MATCH (c:Class)
-WHERE c.name CONTAINS 'FraFieldValueServiceImpl'
-RETURN c.name, c.absolute_path
+MATCH (child)-[r]->(parent:Class)
+WHERE parent.name = 'AbstractFraFieldValueService'
+RETURN child.name, labels(child), type(r)
+
 
 MATCH (c:Class)
 WHERE c.name CONTAINS 'FraFieldValueServiceImpl'
