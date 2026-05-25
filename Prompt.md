@@ -1,3 +1,41 @@
+
+You are failing to identify the Spring INJECTS relationships because your string matching logic is assuming the shape of the annotations data from Pass 2. The AST parser might be outputting annotations as plain strings, dictionaries, or missing the '@' symbol entirely.
+​You must rewrite the Spring dependency matching in Pass 3 using defensive type-checking. Implement the following exactly:
+​1. Create a Defensive Normalizer:
+Write a helper function inside Pass 3 to normalize annotations safely:
+
+'
+def has_target_annotation(node, target_names):
+    annotations = node.get('annotations', [])
+    if not annotations:
+        return False
+    for ann in annotations:
+        # Handle if ann is a dict or a string
+        ann_str = ann.get('name', '') if isinstance(ann, dict) else str(ann)
+        # Normalize: remove '@' and whitespace
+        ann_str = ann_str.replace('@', '').strip()
+        if ann_str in target_names:
+            return True
+    return False
+'
+
+2.Apply to Field Injections:
+When iterating over fields, use the helper:
+if has_target_annotation(field_node, ['Autowired', 'Inject']):
+Then create the INJECTS relationship to the field's type.
+​3. Apply to Constructor Injections (Stereotypes):
+When iterating over classes, use the helper to find Spring components:
+if has_target_annotation(class_node, ['Service', 'Component', 'RestController', 'Repository', 'Configuration']):
+If true, iterate through the class's constructor_parameters (handling if it is a list of strings or dicts) and create INJECTS relationships to those parameter types.
+​4. Log the Raw Data (Critical for Debugging):
+At the very beginning of the Pass 3 loop, grab exactly ONE class that you know is a Spring component and print its raw dictionary to the terminal using logger.info(f"DEBUG CLASS: {class_node}").
+​Do not reply until you have implemented this defensive normalization logic and the debug print.
+
+
+
+
+
+
 MATCH (child)-[r]->(parent:Class)
 WHERE parent.name = 'AbstractFraFieldValueService'
 RETURN child.name, labels(child), type(r)
