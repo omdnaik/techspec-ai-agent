@@ -1,4 +1,19 @@
-
+The pipeline successfully extracted some data, but an analysis of the Neo4j database reveals two massive issues in Pass 2 (the AST extraction phase):
+​It is heavily skewed towards Test classes and dropping core production files.
+​The annotations property and Field nodes are completely missing, which is causing Pass 3 (Spring Enrichment) to fail silently.
+​You must implement the following fixes in the file scanning and AST extraction layers:
+​1. Filter Out Test Files (Clean Architecture):
+Locate the file discovery logic that walks the --repo-path. Add explicit exclusion rules to ignore any files inside a src/test/ directory, and any files ending in *Test.java or *Tests.java. We only want to map production source code.
+​2. Expand the AST Queries (java_parser.py or equivalent):
+The current Tree-sitter query is too narrow. Update the query to capture ALL of these Java node types as valid 'Classes':
+class_declaration, interface_declaration, record_declaration, and enum_declaration.
+​3. Extract Annotations and Fields:
+​Update the queries to explicitly capture annotation and marker_annotation nodes attached to classes, methods, and fields.
+​Update the parser to extract class fields (field_declaration).
+​Ensure these extracted annotations are saved as a list of strings in an annotations property on the resulting dictionaries.
+​4. Verify Database Schema:
+Ensure the annotations property is serialized and passed into the bulk UNWIND Cypher query so it physically appears in Neo4j.
+​Do not reply until you have implemented the test exclusion, expanded the AST node types, and ensured annotations are being written to the database."
 
 The baseline pipeline ran to completion, but the custom Spring architecture extraction has failed. The database is missing all custom Spring relationships (like INJECTS) and stereotypes. Furthermore, the run took 35 minutes due to an N+1 database bottleneck on relationship insertions.
 ​You must implement these two architectural fixes immediately:
