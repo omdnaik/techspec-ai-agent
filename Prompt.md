@@ -1,3 +1,19 @@
+
+The java_utils NameError is resolved, but the parser is now crashing on a new Python syntax error while processing extracted classes.
+​The logs show the following sequence:
+Found Class: AppConfig
+ERROR | Failed to parse or ingest C:\...\AppConfig.java: 'dict' object has no attribute 'name'
+​This means a downstream function is trying to use dot notation (obj.name) on a dictionary instead of bracket notation (obj['name'] or obj.get('name')). This is likely happening in the new logic added for field or annotation extraction, or when appending these new dictionaries to the global list.
+​Please execute the following fix:
+​1. Locate the Syntax Error:
+​Search the parsing pipeline (likely in parsers/java_parser.py, parsers/definition_processor.py, or wherever the Class and Field nodes are aggregated) for .name.
+​Find where a dictionary representing a node (Class, Method, Field, or Annotation) is being incorrectly accessed via dot notation instead of dictionary keys.
+​2. Fix the Accessor:
+​Change obj.name to obj.get('name') or obj['name'] (and apply this fix to any other attributes like .id, .file_path, etc., being accessed on that same dictionary).
+​3. Review the Dictionary Schema:
+​Ensure the object being passed around is consistently typed (either always a custom Class/Dataclass, or always a dictionary) to prevent this from happening in Pass 3.
+​Do not reply until you have found the exact line causing the 'dict' object has no attribute 'name' error and corrected it
+
 The AST parsing phase is suffering from a massive data drop. A review of the runtime logs shows hundreds of files failing with the following Python exception: NameError: name 'java_utils' is not defined.
 ​Furthermore, the parser is heavily skewed towards Test classes, and the database schema confirms that annotations and Field nodes are completely missing, which breaks the Phase 3 Spring Enrichment.
 ​You must fix the file scanning and AST extraction layers immediately:
