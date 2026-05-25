@@ -1,3 +1,13 @@
+MATCH (c:Class)
+WHERE c.name CONTAINS 'FraFieldValueServiceImpl'
+RETURN c.name, c.absolute_path
+
+MATCH (c:Class)
+WHERE c.name CONTAINS 'FraFieldValueServiceImpl'
+RETURN c.name, c.absolute_path
+
+
+
 MATCH path = (leaf:Class)-[:INHERITS*1..5]->(root:Class {name: 'AbstractFieldValueService'})
 RETURN leaf.name AS Concrete_Implementation, 
        [node IN nodes(path) | node.name] AS Full_Inheritance_Chain,
