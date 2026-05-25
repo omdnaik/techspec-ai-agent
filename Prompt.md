@@ -1,4 +1,21 @@
 
+Pass 2 is successfully extracting Class, Method, and Field nodes with their annotations. However, Pass 3 (Spring Enrichment) is still not creating INJECTS relationships.
+​Furthermore, the architectural logic has a critical blind spot: modern Spring Boot relies heavily on Constructor Injection, often without explicit @Autowired annotations.
+​Please implement the following fixes across Pass 2 and Pass 3 immediately:
+​1. Extract Constructor Parameters (Pass 2):
+​Ensure the Java AST parser explicitly handles constructor_declaration.
+​Extract the parameters (formal_parameter) of the constructor, specifically capturing the parameter types (e.g., UserService in public UserController(UserService userService)).
+​Save these constructor parameter types to the Class or Constructor dictionary so Pass 3 can read them.
+​2. Fix Field Injection Matching (Pass 3):
+​Ensure Pass 3 is correctly matching @Autowired on Fields. Account for Tree-sitter formatting anomalies (e.g., the parser might save it as "Autowired" instead of "@Autowired").
+​3. Implement Constructor Injection Logic (Pass 3):
+​If a Class has a Spring stereotype annotation (e.g., @Service, @RestController, @Component, @Configuration), Pass 3 must look at its constructor parameters.
+​Create an INJECTS relationship from the Class to the types defined in its constructor, even if the @Autowired annotation is omitted (as per standard Spring Boot behavior).
+​4. Terminal Logging:
+​Add logger.info() statements to print exactly how many INJECTS relationships were found via Fields and how many via Constructors.
+Do not reply until you have updated the parser to grab constructor parameters and updated Pass 3 to wire up both Field and Constructor injections.
+
+
 The java_utils NameError is resolved, but the parser is now crashing on a new Python syntax error while processing extracted classes.
 ​The logs show the following sequence:
 Found Class: AppConfig
