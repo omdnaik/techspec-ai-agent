@@ -1,4 +1,17 @@
 
+Please select the option to Add both a new Pass 3 Spring Enrichment phase AND logging.
+​Furthermore, you must fix the architectural flow:
+​1. Remove from Pass 2: > Do not attempt to resolve Spring DI relationships during _process_class_node (Pass 2). You cannot create dependency relationships file-by-file because the target classes may not have been parsed yet (forward referencing).
+​2. Build the Dedicated Pass 3:
+Move the _create_spring_injection_relationships logic entirely into the new Pass 3 in graph_updater.py.
+​3. The Pass 3 Execution Flow:
+Pass 3 must only execute after Pass 2 has fully completed caching and parsing all files. Pass 3 should iterate over the entire aggregated set of classes, check their fields/constructors for @Autowired or stereotypes, and then generate the INJECTS relationships.
+​4. Batch the Flush:
+Ensure the resulting INJECTS relationships are batched and flushed via UNWIND, just like the CALLS and OVERRIDES relationships.
+​Proceed with building this dedicated Pass 3
+
+
+
 The pipeline is now successfully parsing Java files and utilizing bulk batching (flushing thousands of CALLS and OVERRIDES instantly). The Pass 2 AST extraction is working perfectly.
 ​However, Pass 3 (Spring Enrichment) is still completely missing from the execution flow. The logs show zero attempts to process or flush INJECTS relationships.
 ​You must physically connect and execute the Spring logic:
