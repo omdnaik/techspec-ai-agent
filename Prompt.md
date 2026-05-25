@@ -1,3 +1,23 @@
+The AST parsing phase is suffering from a massive data drop. A review of the runtime logs shows hundreds of files failing with the following Python exception: NameError: name 'java_utils' is not defined.
+​Furthermore, the parser is heavily skewed towards Test classes, and the database schema confirms that annotations and Field nodes are completely missing, which breaks the Phase 3 Spring Enrichment.
+​You must fix the file scanning and AST extraction layers immediately:
+​1. Fix the NameError Crash:
+​Locate the file causing the crash (likely parsers/java_parser.py or parsers/definition_processor.py).
+​Find where java_utils is being called and either add the missing import statement at the top of the file, or correct the variable name if it was a typo.
+​2. Filter Out Test Files (Clean Architecture):
+​Locate the file discovery logic that walks the --repo-path.
+​Add explicit exclusion rules to ignore any files inside a src/test/ directory, and any files ending in *Test.java or *Tests.java.
+​3. Expand the AST Queries:
+​The current Tree-sitter query is too narrow. Update the query to capture ALL of these Java node types as valid 'Classes': class_declaration, interface_declaration, record_declaration, and enum_declaration.
+​4. Extract Annotations and Fields:
+​Update the queries to explicitly capture annotation and marker_annotation nodes attached to classes, methods, and fields.
+​Update the parser to extract class fields (field_declaration).
+​Ensure these extracted annotations are saved as a list of strings in an annotations property on the resulting dictionaries, and that this property is successfully flushed to Neo4j.
+​Do not reply until you have fixed the NameError, implemented the test exclusion, expanded the AST node types, and ensured annotations are being written to the database.
+
+
+
+
 The pipeline successfully extracted some data, but an analysis of the Neo4j database reveals two massive issues in Pass 2 (the AST extraction phase):
 ​It is heavily skewed towards Test classes and dropping core production files.
 ​The annotations property and Field nodes are completely missing, which is causing Pass 3 (Spring Enrichment) to fail silently.
