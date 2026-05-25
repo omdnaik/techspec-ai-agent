@@ -1,3 +1,11 @@
+
+MATCH (child:Class)-[r:EXTENDS|IMPLEMENTS|INHERITS]->(parent)
+RETURN child.name AS Concrete_Implementation, 
+       type(r) AS Relationship_Type, 
+       parent.name AS Abstract_Parent
+LIMIT 20
+
+
 The execution flow is now correct, but the runtime logs reveal two critical data-handling bugs that must be fixed immediately. Do NOT make any performance or batching optimizations right now; only fix these two bugs:
 ​1. Fix the Pass 4 Crash (Tuple Attribute Error):
 ​Log: ERROR | Failed to build Java variable type map: 'tuple' object has no attribute 'get'
