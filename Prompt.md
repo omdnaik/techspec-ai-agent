@@ -1,3 +1,17 @@
+The execution flow is now correct, but the runtime logs reveal two critical data-handling bugs that must be fixed immediately. Do NOT make any performance or batching optimizations right now; only fix these two bugs:
+​1. Fix the Pass 4 Crash (Tuple Attribute Error):
+​Log: ERROR | Failed to build Java variable type map: 'tuple' object has no attribute 'get'
+​Action: Locate the build_java_variable_type_map function (likely in variable_analyzer.py, type_inference.py, or definition_processor.py).
+​The code expects a dictionary (where it can call .get('type')), but the AST parser is handing it a Python tuple. Add type checking or correct the unpacking logic (e.g., if it's a tuple like (name, type), access it via indices [0], [1] instead of .get()).
+​2. Fix the Pass 3 Silent Failure (Spring Matching):
+​Log: Pass 3 executes, but finishes instantly without creating a single INJECTS relationship.
+​Action: Review the process_spring_dependencies logic in Pass 3. The string matching is failing.
+​Print out the raw structure of the annotations list in the terminal to see what the parser actually saved (e.g., is it a plain string like "Autowired", or a dictionary like {"name": "Autowired"}?).
+​Fix the matching conditions so it successfully identifies Spring annotations and constructor parameters. Add explicit debug logs inside the loop so we can see what it is evaluating.
+​Do not reply until you have fixed the Pass 4 tuple error and corrected the Pass 3 matching logic
+
+
+
 
 Please select the option to Add both a new Pass 3 Spring Enrichment phase AND logging.
 ​Furthermore, you must fix the architectural flow:
