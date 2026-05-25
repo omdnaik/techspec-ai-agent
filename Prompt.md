@@ -1,4 +1,19 @@
 
+
+The baseline pipeline ran to completion, but the custom Spring architecture extraction has failed. The database is missing all custom Spring relationships (like INJECTS) and stereotypes. Furthermore, the run took 35 minutes due to an N+1 database bottleneck on relationship insertions.
+​You must implement these two architectural fixes immediately:
+​1. Restore the Spring INJECTS Logic (Enrichment Phase):
+Custom logic was previously built to extract Spring annotations (like @Autowired, @Component, @Service) and create INJECTS relationships. Currently, this logic is completely bypassed, disconnected, or failing silently.
+​Locate the Spring dependency resolution logic (likely in an enrichment pass, graph_updater.py, or a custom post-processor).
+​Ensure it is successfully reading the annotations from the parsed nodes and actively pushing INJECTS relationships to the database.
+​If the annotations are not being saved to the Class or Method nodes during the initial parsing phase, fix the AST parser to ensure they are captured and flushed to Neo4j.
+​2. Fix the 35-Minute Bottleneck (Batching):
+The application is executing single MERGE queries inside loops for relationships (like IMPORTS and INJECTS), taking over 1 second per relationship.
+​Stop inline database calls inside loops.
+​Aggregate all relationships into an in-memory list (e.g., self.pending_relationships).
+​Flush them using a single bulk UNWIND Cypher transaction at the end of the extraction/enrichment phase.
+​Do not stop until both the Spring Enrichment logic is actively writing to the database and the UNWIND batching is fully implemented
+
 The ingestion pipeline is suffering from a massive N+1 database bottleneck. Capturing the IMPORTS relationships is taking over 1 second per import because it is executing a separate database transaction for every single line.
 ​Please rewrite the relationship ingestion logic to use bulk batching:
 ​1. Locate the Bottleneck: Find the exact function where the IMPORTS relationships (and any other relationships like CALLS or IMPLEMENTS) are being saved to Neo4j (likely in graph_service.py or the specific Cypher execution file).
