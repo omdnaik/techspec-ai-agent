@@ -6,7 +6,29 @@ Focus ONLY on the AST Method Extraction query.
 Instead, write a temporary, lightweight script (e.g., check_count.py) that ONLY runs the Pass 1 and Pass 2 AST extraction across the codebase in memory and prints the final method count.
 ​Iterate on your Tree-sitter queries and run this fast script until the terminal prints Found ~4840 functions/methods. Do not reply until you hit this target number.
 
-
+Prompt 2: The Method Flush Regression (Database Layer)
+​Use this after the fast-check script successfully finds ~4,840 methods in memory.
+​Prompt for Roo Code:
+"Focus ONLY on the Neo4j Cypher flush layer for Java Methods.
+​The Problem: The pipeline successfully extracts thousands of methods into memory, but the database flush is failing. Neo4j is only saving 4 nodes, and they are incorrectly labeled as generic Function nodes instead of Method nodes.
+​Action: Fix the Cypher generation and execution loop for methods. Ensure that Java methods are explicitly assigned the Method label in the Neo4j query, and that the execution loop does not silently drop the remaining thousands of nodes.
+​Verification: Run the full ingestion script against the localhost Neo4j database. Run this exact Cypher query: MATCH (m:Method) RETURN count(m). Do not reply until you have verified in the database that the count is 3000+."
+​Prompt 3: The Inheritance Fix (INHERITS edges)
+​Use this once the Class and Method nodes are perfectly stable.
+​Prompt for Roo Code:
+"Focus ONLY on the Java class inheritance logic (INHERITS edges).
+​The Problem: The pipeline is dropping almost all class inheritances. Out of 251 classes, only 7 INHERITS edges exist. A known explicitly declared relationship (FraFieldValueServiceImpl extends AbstractFraFieldValueService) is completely missing.
+​Action: Fix the AST traversal and Cypher edge creation for superclasses. Do NOT look for superclasses in a 'function registry'—Java classes extend classes, not functions. Ensure the string from the extends keyword is properly extracted and passed to the Cypher MERGE statement for INHERITS.
+​Verification: Run the ingestion script locally. Run this exact Cypher query:
+MATCH (child:Class {name: 'FraFieldValueServiceImpl'})-[r:INHERITS]->(parent:Class) RETURN child.name, type(r), parent.name
+Do not reply until this query successfully returns a row showing the relationship."
+​Prompt 4: The Spring Dependencies (INJECTS edges)
+​Use this as the final step to wire up your microservices.
+​Prompt for Roo Code:
+"Focus ONLY on the Pass 3 Spring Dependency edge creation (INJECTS).
+​The Problem: Pass 3 terminal logs show Processing Spring Dependencies | {}. While the pipeline correctly saves Spring annotations as node properties, the actual block of code responsible for generating the Cypher query (c:Class)-[:INJECTS]->(dep) for @Autowired fields is failing to execute or returning empty.
+​Action: Fix the execution loop in Pass 3. Ensure it successfully iterates over the identified @Autowired dependencies and flushes the INJECTS relationships to the Neo4j database.
+​Verification: Run the ingestion script locally. Run this Cypher query: MATCH ()-[r:INJECTS]->() RETURN count(r). Do not reply until the database successfully populates the missing INJECTS edges."
 
 The local extraction loop is running, but both the AST extraction and Neo4j database flush are severely broken compared to our previous working baseline. Address these 4 critical regressions immediately:
 ​1. Method Extraction Regression (AST Layer):
