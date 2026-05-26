@@ -1,3 +1,13 @@
+Your global fix for the query.captures() iterator introduced a critical regression.
+​The logs now show: ERROR | Failed to parse or ingest ... ConfirmationsApplication.java: too many values to unpack (expected 2). This crash happens immediately after creating the IMPORTS relationships, right when the script tries to extract classes/methods using the AST query.
+​Action Required:
+​Look at the traceback for this specific unpacking error (it will be in your internal logs or terminal output).
+​The error means your new dictionary conversion or for loop unpacking is misaligned with what Tree-sitter actually returns. (e.g., for node, name in captures: might be failing if the structure is different, or if you used dict() improperly).
+​Fix the unpacking syntax in the class/method extraction logic (likely in parent_extraction.py, mixin.py, or definition_processor.py) so it correctly parses the tree_sitter captures without throwing unpacking errors.
+​Do not reply until you have fixed this specific unpack regression so the file can finish ingesting.
+
+
+
 The pipeline ran, and the database confirms that the concrete class is successfully saved as a Class node. Furthermore, there are no Java generics involved in the inheritance.
 ​However, two critical logic bugs remain in the Python script:
 ​1. Pass 3 is receiving an empty payload:
