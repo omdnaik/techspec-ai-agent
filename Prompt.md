@@ -1,3 +1,17 @@
+The pipeline ran, and the database confirms that the concrete class is successfully saved as a Class node. Furthermore, there are no Java generics involved in the inheritance.
+​However, two critical logic bugs remain in the Python script:
+​1. Pass 3 is receiving an empty payload:
+The DEBUG CLASS: log never printed, which means process_spring_dependencies() is looping over an empty list.
+​Action: Locate exactly where Pass 3 is invoked. Ensure you are passing the fully populated dictionary/list of extracted AST classes from Pass 2 into the Pass 3 function. It cannot be empty.
+​2. Concrete classes are missing INHERITS edges:
+The script successfully linked two abstract classes with an INHERITS edge, proving the Tree-sitter extends query works. However, it is dropping or failing to merge the extends relationship for concrete classes.
+​Action: Review the Python extraction logic and the Neo4j Cypher merge queries. Ensure that the superclass is extracted and the INHERITS Cypher query executes for all classes, not just abstract ones. Do not filter out inheritance for standard concrete classes.
+​Do not reply until you have fixed the Pass 3 data handoff and ensured the INHERITS relationship is flushed to Neo4j for all concrete classes.
+
+
+
+
+
 
 You are failing to identify the Spring INJECTS relationships because your string matching logic is assuming the shape of the annotations data from Pass 2. The AST parser might be outputting annotations as plain strings, dictionaries, or missing the '@' symbol entirely.
 ​You must rewrite the Spring dependency matching in Pass 3 using defensive type-checking. Implement the following exactly:
