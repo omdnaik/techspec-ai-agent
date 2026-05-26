@@ -1,3 +1,11 @@
+
+MATCH (child:Class {name: 'FraFieldValueServiceImpl'})-[r:INHERITS]->(parent:Class)
+RETURN child.name, type(r), parent.name
+
+
+
+
+
 The unit tests for Pass 2 passed in memory against the mock string, but a full live ingestion run still fails silently. The Neo4j database shows ONLY Project, Folder, File, Module, and IMPORTS. There are 0 Class or Method nodes. The terminal logs show Found 0 functions/methods in codebase.
 ​This proves the main file-traversal loop is completely blind to classes/methods in real files. The AST query execution in the main ingest loop is returning empty lists before it ever reaches your utility functions or the Neo4j flush layer.
 ​Action Required:
