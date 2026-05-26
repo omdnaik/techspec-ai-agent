@@ -1,3 +1,16 @@
+The unit tests for Pass 2 passed in memory against the mock string, but a full live ingestion run still fails silently. The Neo4j database shows ONLY Project, Folder, File, Module, and IMPORTS. There are 0 Class or Method nodes. The terminal logs show Found 0 functions/methods in codebase.
+​This proves the main file-traversal loop is completely blind to classes/methods in real files. The AST query execution in the main ingest loop is returning empty lists before it ever reaches your utility functions or the Neo4j flush layer.
+​Action Required:
+​Investigate the main extraction loop (e.g., parent_extraction.py, mixin.py, or definition_processor.py).
+​Check the exact Tree-sitter query string being executed against live Java files to find classes and methods. Why is it failing to match live AST nodes when it worked on the mock?
+​Verify the unpacking loop syntax for ... in query.captures(...) in the live extraction file. Make sure it wasn't left in a broken state from previous reverts.
+​Inject a debug log directly inside the live extraction loop that prints: logger.info(f"Extracted {len(classes)} classes from {filepath}").
+​Do not reply until you have identified why the main file loop is finding 0 classes in real .java files, fixed the logic, and pushed a commit."
+
+
+
+
+
 "I have reviewed tests/test_pipeline_passes.py. The structure is good, but your implementation of test_pass_3_spring_enrichment is completely unacceptable.
 ​On lines 205-209, you wrote a comment acknowledging a 'known issue' where Pass 2 extracts annotations with the @ prefix, breaking the is_spring_bean check because the validation expects them without the @ prefix. Instead of fixing the pipeline logic, you bypassed the is_spring_bean validation and altered the test to expect the broken @Service string.
 ​Action Required:
