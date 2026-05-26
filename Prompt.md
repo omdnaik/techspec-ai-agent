@@ -1,3 +1,38 @@
+
+The bug fixes are committed, and we are now establishing our automated test suite.
+​Instead of testing micro-functions for specific syntax bugs, we are going to implement Pipeline Boundary Testing. We must verify the output payload of each architectural Pass.
+​Execute the following steps strictly in order:
+​Step 1: Setup Testing Environment
+​Ensure pytest is installed and in requirements.txt (or requirements-dev.txt).
+​Create tests/test_pipeline_passes.py.
+​Step 2: Create the Mock Fixture
+Inside the test file, define a string variable containing a minimal, valid Java Spring class to act as our universal test data:
+
+package com.example;
+import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+
+@Service
+public class DummyServiceImpl extends AbstractDummyService {
+    @Autowired
+    private UserRepository userRepository;
+}
+Step 3: Write the Pass Tests
+Write standard pytest tests to validate the output boundaries of each pass using the mock fixture:
+​test_pass_1_parsing: Feed the mock string to the Java Tree-sitter parser. Assert the output is a valid AST tree (not None).
+​test_pass_2_extraction: Feed the AST to the class/method extraction logic. Assert the output payload contains the class DummyServiceImpl, the field userRepository, and correctly maps the superclass AbstractDummyService.
+​test_pass_3_spring_enrichment: Pass the output dictionary from Pass 2 into the Spring dependency function. Assert that the resulting payload successfully generated INJECTS or Spring component metadata based on the @Service and @Autowired annotations.
+​Step 4: Execute and Commit
+​Run pytest tests/test_pipeline_passes.py.
+​Debug your test or the underlying pipeline code until all passes turn green.
+​Run git add . and git commit -m "test: implement pipeline boundary tests for passes 1 through 3".
+​Do not reply until you have written the tests, verified they pass in the terminal, and committed the code.
+
+
+
+
+
+
 The last global search-and-replace you did to fix the Tree-sitter query.captures() iterator completely broke the AST extraction pipeline. The logs now show Found 0 functions/methods in codebase and no classes are being extracted.
 ​We are now implementing a strict Git workflow. Execute the following steps exactly in order:
 ​Step 1: Initialize Version Control
