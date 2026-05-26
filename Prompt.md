@@ -1,3 +1,23 @@
+The last global search-and-replace you did to fix the Tree-sitter query.captures() iterator completely broke the AST extraction pipeline. The logs now show Found 0 functions/methods in codebase and no classes are being extracted.
+​We are now implementing a strict Git workflow. Execute the following steps exactly in order:
+​Step 1: Initialize Version Control
+​Run git init in the root directory.
+​Create a standard Python .gitignore file (ensure .venv, __pycache__, .cgr-hash-cache.json, and stdlib_cache.json are ignored).
+​Run git add . and git commit -m "chore: baseline broken state with empty AST extraction".
+​Step 2: Revert the Catastrophic Global Fix
+​Undo the global dictionary conversions you applied to query.captures() across the js_ts, py, and java parsers. Revert them back to their original for node, name in captures: unpacking syntax.
+​Ensure parent_extraction.py, mixin.py, and call_processor.py are restored so they can successfully extract classes and methods again.
+​Run git add . and git commit -m "fix: revert global captures conversion to restore AST parsing".
+​Step 3: Apply the TARGETED Fix for Pass 4
+​The original bug was only in the variable mapping logic (Failed to build Java variable type map: 'tuple' object has no attribute 'get').
+​Go specifically to the function responsible for building the Java variable type map (likely in variable_analyzer.py or similar).
+​Fix the tuple access only in that specific variable processing loop (e.g., using index [0] and [1] instead of .get()). Do NOT touch the core Tree-sitter iterators.
+​Run git add . and git commit -m "fix: resolve tuple attribute error in variable type map exclusively".
+​Do not reply until all three Git commits are complete and the targeted fix is applied.
+
+
+
+
 Your global fix for the query.captures() iterator introduced a critical regression.
 ​The logs now show: ERROR | Failed to parse or ingest ... ConfirmationsApplication.java: too many values to unpack (expected 2). This crash happens immediately after creating the IMPORTS relationships, right when the script tries to extract classes/methods using the AST query.
 ​Action Required:
