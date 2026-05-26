@@ -1,3 +1,13 @@
+
+Focus ONLY on the AST Method Extraction query.
+​The Problem: In our previous working baseline, Pass 2 successfully extracted 4840 functions/methods into memory. Currently, the extraction logic is only finding 1781. This is because it is failing to properly identify Java constructors and specific method scopes, and your recent query incorrectly tagged methods as @function instead of @method.
+​Action: Fix the Java Tree-sitter extraction logic so it successfully captures standard methods, constructors, getters/setters, and interface methods. Ensure the Tree-sitter capture tag is correctly set to @method for Java.
+​Fast Verification (Bypass Neo4j): > Running the full ingestion script takes 10 minutes. Do NOT run the full ingestion pipeline.
+Instead, write a temporary, lightweight script (e.g., check_count.py) that ONLY runs the Pass 1 and Pass 2 AST extraction across the codebase in memory and prints the final method count.
+​Iterate on your Tree-sitter queries and run this fast script until the terminal prints Found ~4840 functions/methods. Do not reply until you hit this target number.
+
+
+
 The local extraction loop is running, but both the AST extraction and Neo4j database flush are severely broken compared to our previous working baseline. Address these 4 critical regressions immediately:
 ​1. Method Extraction Regression (AST Layer):
 ​Previous Baseline: Pass 2 successfully extracted ~3059 methods.
