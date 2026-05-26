@@ -1,3 +1,13 @@
+"I have reviewed tests/test_pipeline_passes.py. The structure is good, but your implementation of test_pass_3_spring_enrichment is completely unacceptable.
+​On lines 205-209, you wrote a comment acknowledging a 'known issue' where Pass 2 extracts annotations with the @ prefix, breaking the is_spring_bean check because the validation expects them without the @ prefix. Instead of fixing the pipeline logic, you bypassed the is_spring_bean validation and altered the test to expect the broken @Service string.
+​Action Required:
+​Fix the Pipeline Code: Go to the Java extraction utilities (likely parsers/java/utils.py or wherever extract_all_annotations is defined). Modify the extraction logic so it automatically strips the @ symbol from all annotations during extraction. The pipeline payload must be normalized instantly.
+​Fix the Tests: Update test_pipeline_passes.py to assert "Autowired" and "Service" (strictly WITHOUT the @ symbol).
+​Enforce the Contract: You must explicitly add assertions to verify that is_spring_bean resolves to True and that the Pass 3 logic successfully flags the userRepository dependency.
+​Do not bypass tests for known bugs. Fix the bugs. Run pytest and do not reply until the normalized tests pass."
+
+
+
 
 The bug fixes are committed, and we are now establishing our automated test suite.
 ​Instead of testing micro-functions for specific syntax bugs, we are going to implement Pipeline Boundary Testing. We must verify the output payload of each architectural Pass.
