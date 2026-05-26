@@ -1,3 +1,25 @@
+The local extraction loop is running, but both the AST extraction and Neo4j database flush are severely broken compared to our previous working baseline. Address these 4 critical regressions immediately:
+​1. Method Extraction Regression (AST Layer):
+​Previous Baseline: Pass 2 successfully extracted ~3059 methods.
+​Current State: Logs show only 1781 functions/methods found.
+​Action: You broke the Java Tree-sitter method query in a previous edit. Fix the AST query in the Java parser so it captures ALL methods again (including constructors, static methods, interface methods, etc.) to restore the ~3000 count.
+​2. Method Flush Regression (Database Layer):
+​Previous Baseline: Neo4j successfully stored 3059 Method nodes and 4 Function nodes.
+​Current State: Neo4j only has 4 Function nodes. The ~1781 methods currently found in memory are being silently dropped.
+​Action: Fix the Cypher generation and execution loop. Ensure all extracted methods are successfully saved to Neo4j and correctly labeled as Method.
+​3. Inheritance Under-extraction:
+​Current State: Only 7 INHERITS edges exist out of 251 classes. A known relationship (FraFieldValueServiceImpl extends AbstractFraFieldValueService) is missing.
+​Action: Fix the live AST traversal for superclass. The logic is failing to capture standard extends declarations in real .java files. Ensure the INHERITS Cypher query executes for all identified superclasses.
+​4. Missing INJECTS Edges:
+​Current State: Logs show Pass 3: Processing Spring Dependencies | {} and 0 INJECTS edges exist.
+​Action: Spring annotations are captured as properties, but the Pass 3 logic that iterates over @Autowired fields to execute the (class)-[:INJECTS]->(dependency) Cypher query is failing. Fix this execution loop.
+​Execution & Verification:
+You have full access to the Neo4j instance running on localhost. Do not write test files for this. Instead:
+​Apply the fixes to the AST queries and Cypher generation logic.
+​Run the main ingestion pipeline script directly against the localhost Neo4j database.
+​Execute Cypher queries to verify the database now contains ~3000 Method nodes, the missing INHERITS edges, and the missing INJECTS edges.
+​Do not reply until you have pushed a commit fixing all four issues and verified the data in the local database."
+
 
 MATCH (child:Class {name: 'FraFieldValueServiceImpl'})-[r:INHERITS]->(parent:Class)
 RETURN child.name, type(r), parent.name
