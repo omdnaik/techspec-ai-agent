@@ -1,4 +1,15 @@
 
+The method extraction is now perfectly stable. Now, focus ONLY on the Java class inheritance logic (INHERITS edges).
+​The Problem: The pipeline is dropping almost all class inheritances. Out of 251 classes, only 7 INHERITS edges exist. A known, explicitly declared relationship (FraFieldValueServiceImpl extends AbstractFraFieldValueService) is completely missing.
+​Action: Fix the AST traversal and Cypher edge creation for superclasses. Do NOT look for superclasses in a 'function registry'—Java classes extend other classes, not functions. The issue is likely in how the pipeline resolves the Fully Qualified Name (FQN) of the superclass before passing it to the Cypher MERGE statement.
+​Verification: Run the ingestion script locally against the Neo4j database. Run this exact Cypher query:
+MATCH (child:Class {name: 'FraFieldValueServiceImpl'})-[r:INHERITS]->(parent:Class) RETURN child.name, type(r), parent.name
+Do not reply until this query successfully returns a row showing the relationship.
+
+
+
+
+
 Focus ONLY on the AST Method Extraction query.
 ​The Problem: In our previous working baseline, Pass 2 successfully extracted 4840 functions/methods into memory. Currently, the extraction logic is only finding 1781. This is because it is failing to properly identify Java constructors and specific method scopes, and your recent query incorrectly tagged methods as @function instead of @method.
 ​Action: Fix the Java Tree-sitter extraction logic so it successfully captures standard methods, constructors, getters/setters, and interface methods. Ensure the Tree-sitter capture tag is correctly set to @method for Java.
