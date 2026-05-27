@@ -1,3 +1,15 @@
+The inheritance logic is perfectly resolved, and the nodes are stable. Now, focus ONLY on the final step: Pass 3 Spring Dependency edge creation (INJECTS).
+​The Problem: Pass 3 terminal logs previously showed Processing Spring Dependencies | {}. While the pipeline correctly saves Spring annotations as node properties (is_spring_bean, bean_type), the logic responsible for mapping @Autowired fields to their target beans and executing the Cypher query (class)-[:INJECTS]->(dependency) is failing. It is either returning empty dictionaries or failing to execute the Cypher flush.
+​Action: > 1. Review and fix the Pass 3 logic (likely your get_spring_bean_dependencies or equivalent Neo4j flush function). Ensure it correctly identifies the target bean types and successfully generates and executes the INJECTS Cypher statement.
+2. Do NOT touch Pass 1, Pass 2, or the INHERITS logic. They are working perfectly.
+​Execution & Verification:
+​Apply your fix to the Pass 3 logic.
+​Run the full, end-to-end ingestion pipeline locally against the Neo4j database.
+​After the run completes, execute this exact Cypher query: MATCH ()-[r:INJECTS]->() RETURN count(r)
+​Do not reply until the pipeline finishes and you have verified in the database that the INJECTS edges have successfully populated.
+
+
+
 
 "Issue Type","Summary","Epic Name","Description","Story Points","Priority","Component","Labels","Blocked By","Blocks"
 "Story","Create Base Repository Structure for Regression Automation Platform","EPIC 1 — Platform Foundation","As a platform engineer, I need a standardized repository structure so the platform is maintainable. Structure: inventories/, playbooks/, roles/, artifacts/, templates/, filter_plugins/, scripts/. AC: Skeletons created, naming matches spec.","2","High","Platform-Foundation","Wave-1,Phase-1","", "US-002,US-005,US-006"
