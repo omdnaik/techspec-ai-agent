@@ -1,3 +1,15 @@
+
+STOP. You are stuck in a reasoning loop.
+​You are obsessing over extract_all_annotations, TS_MODIFIERS, and AST parsing. Do NOT touch the annotation extraction logic. Pass 2 is already working perfectly. We know this for a fact because the is_spring_bean and bean_type properties are successfully saving to the Neo4j database.
+​The Problem is strictly in the Pass 3 Cypher execution:
+The code is successfully reading the annotations, but the logic that maps the @Autowired field to its target class and executes the (class)-[:INJECTS]->(dependency) Cypher query is broken. It is either failing to resolve the target bean's Fully Qualified Name, or the MERGE statement is quietly failing.
+​Action:
+​Stop looking at the AST parser (language_spec.py, modifiers, etc.).
+​Open the file responsible for Pass 3 Spring dependency resolution and Neo4j Cypher generation.
+​Fix the logic that actually draws the edge between the two nodes in the database.
+​Run the full ingestion pipeline and verify with MATCH ()-[r:INJECTS]->() RETURN count(r). Do not reply until you have fixed the Cypher flush and verified the edge count.
+
+
 The inheritance logic is perfectly resolved, and the nodes are stable. Now, focus ONLY on the final step: Pass 3 Spring Dependency edge creation (INJECTS).
 ​The Problem: Pass 3 terminal logs previously showed Processing Spring Dependencies | {}. While the pipeline correctly saves Spring annotations as node properties (is_spring_bean, bean_type), the logic responsible for mapping @Autowired fields to their target beans and executing the Cypher query (class)-[:INJECTS]->(dependency) is failing. It is either returning empty dictionaries or failing to execute the Cypher flush.
 ​Action: > 1. Review and fix the Pass 3 logic (likely your get_spring_bean_dependencies or equivalent Neo4j flush function). Ensure it correctly identifies the target bean types and successfully generates and executes the INJECTS Cypher statement.
