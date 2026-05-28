@@ -17,6 +17,24 @@ Create an integration test named test_spring_dependencies_tool.py.
 ​Run pytest test_spring_dependencies_tool.py. Do not reply until the test passes and the tools are registered.
 
 
+Now we will add a tool to traverse the inheritance hierarchy, which is critical for Spring Boot applications.
+​Action:
+Implement and register the following tool. Do not alter the Cypher query provided.
+​get_class_hierarchy
+​Input: class_name (string)
+​Cypher: MATCH (c:Class {name: $class_name})-[:INHERITS]->(parent:Class) RETURN 'Parent' as relationship, parent.name as node UNION MATCH (child:Class)-[:INHERITS]->(c:Class {name: $class_name}) RETURN 'Child' as relationship, child.name as node
+​Logic: Execute the query using the Neo4j driver and return the class's parents and children.
+​Automated Test Required:
+Create an integration test named test_class_hierarchy_tool.py.
+​Use the Neo4j driver to temporarily create three mock classes: MockParent, MockTarget, and MockChild.
+​Create INHERITS edges: MockChild -> MockTarget, and MockTarget -> MockParent.
+​Call the get_class_hierarchy tool function with class_name="MockTarget".
+​Assert that the tool returns both MockParent (as Parent) and MockChild (as Child).
+​Add a teardown block to delete these mock nodes and edges.
+​Run pytest test_class_hierarchy_tool.py. Do not reply until the test passes and the tool is registered.
+
+
+
 
 
 We are transitioning this MCP server into a Read-Only Cloud Intelligence engine.
