@@ -1,4 +1,24 @@
 
+We are going to add the first set of read-only tools to the MCP server. We need to expose the schema so the LLM understands the graph, and we need a tool to fetch Spring Boot dependencies.
+​Action:
+Implement and register the following two tools. Do not alter the Cypher schema provided.
+​1. get_graph_schema
+​Logic: Do not query the DB. Simply return this hardcoded string: Nodes: Class, Method, Field. Edges: (Class)-[:INHERITS]->(Class), (Class)-[:INJECTS]->(Class for @Autowired beans), (Method)-[:CALLS]->(Method), (Class)-[:DEFINES]->(Method/Field). Properties: is_spring_bean, bean_type.
+​2. get_spring_dependencies
+​Input: class_name (string)
+​Cypher: MATCH (c:Class {name: $class_name})-[:INJECTS]->(dep:Class) RETURN dep.name AS dependency, dep.bean_type AS type
+​Logic: Execute the Cypher query using the Neo4j driver and return the list of dependencies.
+​Automated Test Required:
+Create an integration test named test_spring_dependencies_tool.py.
+​In the test, use the Neo4j driver to temporarily create two mock classes: MockServiceA and MockRepositoryB, connected by an INJECTS edge.
+​Call the get_spring_dependencies tool function with class_name="MockServiceA".
+​Assert that the result correctly returns MockRepositoryB.
+​Add a teardown block to delete these mock nodes and edges.
+​Run pytest test_spring_dependencies_tool.py. Do not reply until the test passes and the tools are registered.
+
+
+
+
 We are transitioning this MCP server into a Read-Only Cloud Intelligence engine.
 ​Action: > 1. Remove the following tools from the MCP tools registry and but do not delete their underlying Python functions: delete_project, wipe_database, surgical_replace_code, and write_file.
 2. Ensure the main codebase ingestion function (AST parsing/Neo4j Pass 1-3) is NOT exposed to the LLM via a @tool decorator or registry.
