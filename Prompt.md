@@ -1,4 +1,12 @@
 
+We need to secure the MCP server and separate ingestion from querying.
+​Action 1: Block LLM Ingestion
+Search the MCP server initialization file (e.g., server.py or where the tools are registered). Locate the function that triggers the codebase ingestion (AST parsing and Neo4j Pass 1/2/3 flushes). Remove the @tool decorator or tool registration for this function completely. The LLM must not be able to trigger codebase ingestion.
+​Action 2: Verify Exposed Tools
+Audit the remaining exposed tools. Ensure ONLY read-only or query-based tools are exposed to the LLM (e.g., tools that run Cypher queries to fetch dependencies, classes, or methods).
+​Review the exposed tools and confirm in your response that the ingestion trigger is successfully isolated and no longer exposed to the LLM.
+
+
 The method extraction is now perfectly stable. Now, focus ONLY on the Java class inheritance logic (INHERITS edges).
 ​The Problem: The pipeline is dropping almost all class inheritances. Out of 251 classes, only 7 INHERITS edges exist. A known, explicitly declared relationship (FraFieldValueServiceImpl extends AbstractFraFieldValueService) is completely missing.
 ​Action: Fix the AST traversal and Cypher edge creation for superclasses. Do NOT look for superclasses in a 'function registry'—Java classes extend other classes, not functions. The issue is likely in how the pipeline resolves the Fully Qualified Name (FQN) of the superclass before passing it to the Cypher MERGE statement.
