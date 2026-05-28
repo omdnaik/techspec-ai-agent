@@ -1,4 +1,30 @@
 
+We are transitioning this MCP server into a Read-Only Cloud Intelligence engine.
+​Action: > 1. Remove the following tools from the MCP tools registry and but do not delete their underlying Python functions: delete_project, wipe_database, surgical_replace_code, and write_file.
+2. Ensure the main codebase ingestion function (AST parsing/Neo4j Pass 1-3) is NOT exposed to the LLM via a @tool decorator or registry.
+​Automated Test Required:
+Create a unit test named test_mcp_security.py. This test must import your MCP server's tool registry and explicitly assert that:
+A) delete_project, wipe_database, surgical_replace_code, and write_file are NOT in the list of registered tools.
+B) The ingestion trigger tool is NOT in the list of registered tools.
+​Run pytest test_mcp_security.py. Do not reply until the test passes and proves the server is strictly read-only.
+
+Now we need to clean up the logging infrastructure so it is ready for a cloud environment.
+​Action:
+​Update the logging configuration (likely in logger.py or similar) to write all logs to a specific directory: code_graph_rag/log/.
+​Ensure the code uses os.makedirs(..., exist_ok=True) so the application doesn't crash if the directory doesn't exist yet.
+​Update the root .gitignore file to include code_graph_rag/log/ and *.log.
+​Automated Test Required:
+Create a fast integration test named test_logger_setup.py. This test should:
+​Import your logger configuration.
+​Write a dummy log message (e.g., logger.info("Test log")).
+​Assert that the log file was successfully created inside the code_graph_rag/log/ directory.
+​(Teardown) Delete the dummy log file after the assertion.
+​Run pytest test_logger_setup.py. Do not reply until the test passes and the .gitignore is updated
+
+
+
+
+
 We need to secure the MCP server and separate ingestion from querying.
 ​Action 1: Block LLM Ingestion
 Search the MCP server initialization file (e.g., server.py or where the tools are registered). Locate the function that triggers the codebase ingestion (AST parsing and Neo4j Pass 1/2/3 flushes). Remove the @tool decorator or tool registration for this function completely. The LLM must not be able to trigger codebase ingestion.
