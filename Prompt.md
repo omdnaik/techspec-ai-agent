@@ -1,3 +1,20 @@
+Context: We are migrating our graph database backend from Neo4j to Kùzu to support embedded, file-based multi-tenancy. We are completely dropping the Neo4j server connection.
+​Action 1: Dependency Swap & Virtual Environment Sync
+Remove neo4j from the project's dependency file (e.g., requirements.txt or pyproject.toml) and add kuzu.
+Crucially, you must activate the virtual environment first. > Execute the activation command (e.g., source venv/bin/activate on Linux/Mac, or .\venv\Scripts\activate on Windows), and then run pip install -r requirements.txt (or equivalent) in the terminal to ensure the active virtual environment has Kùzu installed.
+​Action 2: Define Kùzu Schema Setup
+Kùzu requires an explicit schema before inserting data. Create a new database initialization function that runs the following Cypher commands to set up the schema in the graph.kz file:
+​CREATE NODE TABLE Class (name STRING, source_code STRING, PRIMARY KEY(name))
+​CREATE NODE TABLE Method (name STRING, PRIMARY KEY(name))
+​CREATE REL TABLE INJECTS (FROM Class TO Class)
+​CREATE REL TABLE INHERITS (FROM Class TO Class)
+​CREATE REL TABLE CALLS (FROM Method TO Method)
+​Action 3: Update AST Extraction (Pass 1)
+In the AST extraction logic (Pass 1), update the Class extraction to capture the raw text of the class block. Save this string into the extracted dictionary under the key source_code.
+​Action 4: Update Database Flush (Pass 2 & 3)
+Refactor the data insertion functions. Remove all Neo4j GraphDatabase.driver logic. Replace it with:
+
+
 
 We are going to add the first set of read-only tools to the MCP server. We need to expose the schema so the LLM understands the graph, and we need a tool to fetch Spring Boot dependencies.
 ​Action:
