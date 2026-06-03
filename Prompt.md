@@ -14,6 +14,22 @@ In the AST extraction logic (Pass 1), update the Class extraction to capture the
 ​Action 4: Update Database Flush (Pass 2 & 3)
 Refactor the data insertion functions. Remove all Neo4j GraphDatabase.driver logic. Replace it with:
 
+import kuzu
+db = kuzu.Database("graph.kz")
+conn = kuzu.Connection(db)
+
+Update the insertion queries from Neo4j syntax to standard Kùzu Cypher execution (conn.execute(...)). Ensure the source_code is passed as a parameter when creating a Class node.
+​Automated Test Required:
+Create a unit test named test_kuzu_ingestion.py.
+​Set up a temporary Kùzu database (e.g., in /tmp or .pytest_cache).
+​Run the new schema initialization function.
+​Mock an extracted Class dictionary with a dummy source_code string and insert it using the updated Pass 2 logic.
+​Execute a query to assert the Class node exists and the source_code matches.
+​Close the Kùzu connection and clean up the temporary .kz file.
+​Make sure the virtual environment is still active, then run pytest test_kuzu_ingestion.py. Do not stop until the test passes and the migration is structurally sound.
+
+
+
 
 
 We are going to add the first set of read-only tools to the MCP server. We need to expose the schema so the LLM understands the graph, and we need a tool to fetch Spring Boot dependencies.
