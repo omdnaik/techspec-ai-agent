@@ -1,3 +1,17 @@
+Context: The Kùzu migration unit tests passed, but the actual run_ingestion process failed with two errors. You need to fix your refactored code in codebase_rag/kuzu_database.py.
+​Error 1: Dangling SET Clause in Cypher
+RuntimeError: Parser exception: Invalid input <MERGE (n:Project {name: $id}) SET >: expected rule oC_SingleQuery
+​Fix Required: Look at _flush_node_label_group (around line 372). Your Python code is dynamically building a Cypher query but leaving a dangling SET keyword when a node has no additional properties to update (like the Project node, which only has a name).
+​Update the string builder logic: Only append the SET clause IF there are actual properties to set. Kùzu strictly requires explicit assignments (e.g., SET n.prop1 = $val1), so ensure the string builder constructs this correctly without trailing spaces or empty clauses.
+​Error 2: Missing Python Definition
+MCP Server Error: name 'RelBatchRow' is not defined
+​Fix Required: You missed a dependency during the refactoring. Find where RelBatchRow is referenced in the database insertion logic. Either restore its import from the original Neo4j implementation files, or redefine it as a dataclass or NamedTuple in kuzu_database.py.
+​Validation Action:
+Do not just rely on your mock test. Review the entire _flush_node_label_group and relationship flushing logic to ensure they handle empty property dictionaries safely without breaking Kùzu's strict Cypher parser.
+
+-------
+
+
 Context: We are migrating our graph database backend from Neo4j to Kùzu to support embedded, file-based multi-tenancy. We are completely dropping the Neo4j server connection.
 ​Action 1: Dependency Swap & Virtual Environment Sync
 Remove neo4j from the project's dependency file (e.g., requirements.txt or pyproject.toml) and add kuzu.
