@@ -1,6 +1,58 @@
 Context: We are migrating our graph database backend from Neo4j to Kùzu to support embedded, file-based multi-tenancy. We are completely dropping the Neo4j server connection.
 ​Action 1: Dependency Swap & Virtual Environment Sync
 Remove neo4j from the project's dependency file (e.g., requirements.txt or pyproject.toml) and add kuzu.
+Crucially, you must activate the virtual environment first. Execute the activation command (e.g., source venv/bin/activate or .\venv\Scripts\activate), and then run pip install -r requirements.txt (or equivalent) in the terminal to ensure the active virtual environment has Kùzu installed.
+​Action 2: Define the Exhaustive Kùzu Schema Setup
+Unlike Neo4j, Kùzu requires a strict, explicit schema before inserting data. Create a new database initialization function that runs the CREATE NODE TABLE and CREATE REL TABLE Cypher commands to set up the schema in the graph.kz file.
+​Review your AST extraction logic to assign the correct properties to the correct nodes, but you MUST define the following entities based on the existing Neo4j schema:
+​Nodes (9):
+​Project
+​Module
+​Folder
+​File
+​Class (Must include source_code STRING along with its standard properties)
+​Interface
+​Enum
+​Method
+​Field
+(Note: Use name STRING as the PRIMARY KEY for all nodes. Ensure properties like is_spring_bean BOOLEAN, bean_type STRING, path STRING, start_line INT64, etc., are assigned to their respective node tables based on what the extraction script yields).
+​Relationships (9):
+(Note: Kùzu requires explicit FROM and TO definitions for relationships. Inspect the Pass 2/Pass 3 Python insertion code to see which nodes connect to which, and define them correctly. E.g., CREATE REL TABLE CONTAINS_FILE (FROM Folder TO File)).
+​IMPORTS
+​DEFINES
+​DEFINES_METHOD
+​DEFINES_FIELD
+​INHERITS
+​CONTAINS_FILE
+​CONTAINS_FOLDER
+​CALLS
+​INJECTS
+​Action 3: Update AST Extraction (Pass 1)
+In the AST extraction logic (Pass 1), update the Class extraction to capture the raw text of the class block. Save this string into the extracted dictionary under the key source_code.
+​Action 4: Update Database Flush (Pass 2 & 3)
+Refactor the data insertion functions. Remove all Neo4j GraphDatabase.driver logic. Replace it with:
+
+import kuzu
+db = kuzu.Database("graph.kz")
+conn = kuzu.Connection(db)
+
+Update the insertion queries from Neo4j syntax to standard Kùzu Cypher execution (conn.execute(...)). Note: Kùzu uses strictly typed parameters, ensure your Python dictionaries align with the schema.
+​Automated Test Required:
+Create a unit test named test_kuzu_ingestion.py.
+​Set up a temporary Kùzu database (e.g., in /tmp or .pytest_cache).
+​Run the new exhaustive schema initialization function.
+​Mock an extracted Class dictionary with a dummy source_code string and insert it using the updated Pass 2 logic.
+​Execute a query to assert the Class node exists and the source_code matches.
+​Close the Kùzu connection and clean up the temporary .kz file.
+​Make sure the virtual environment is still active, then run pytest test_kuzu_ingestion.py. Do not stop until the test passes and the migration is structurally sound.
+
+
+
+
+__------_----------
+Context: We are migrating our graph database backend from Neo4j to Kùzu to support embedded, file-based multi-tenancy. We are completely dropping the Neo4j server connection.
+​Action 1: Dependency Swap & Virtual Environment Sync
+Remove neo4j from the project's dependency file (e.g., requirements.txt or pyproject.toml) and add kuzu.
 Crucially, you must activate the virtual environment first. > Execute the activation command (e.g., source venv/bin/activate on Linux/Mac, or .\venv\Scripts\activate on Windows), and then run pip install -r requirements.txt (or equivalent) in the terminal to ensure the active virtual environment has Kùzu installed.
 ​Action 2: Define Kùzu Schema Setup
 Kùzu requires an explicit schema before inserting data. Create a new database initialization function that runs the following exact Cypher commands to set up the schema in the graph.kz file:
