@@ -1,3 +1,34 @@
+Context: We have successfully migrated the AST ingestion pipeline to use Kùzu. We are now executing Task 2.1: Refactoring the existing MCP tools to query the local Kùzu database instead of Neo4j.
+​Action 1: Locate the Tools
+Find the Python file where the MCP tools get_spring_dependencies and get_class_hierarchy are defined.
+​Action 2: Swap the Connection
+Remove all references to the Neo4j GraphDatabase.driver. Initialize a global Kùzu connection at the top of the file to be shared by the tools for now:
+import kuzu
+# Note: use the absolute path to your generated graph.kz directory here
+db = kuzu.Database("graph.kz") 
+conn = kuzu.Connection(db)
+
+
+Action 3: Refactor Query Execution & Parsing
+Update the Cypher execution inside both tools from Neo4j (session.run) to Kùzu (conn.execute).
+CRITICAL: You must rewrite how the results are parsed. Kùzu does not return dictionaries. You must iterate using has_next() and map the flat list back to the expected JSON/dictionary format.
+​Example Translation:
+
+results = conn.execute(query, parameters={"class_name": class_name})
+response_data = []
+while results.has_next():
+    row = results.get_next()
+    # If query is RETURN c.name, d.name
+    response_data.append({"class": row[0], "dependency": row[1]})
+
+
+Action 4: Manual Tool Verification
+Do not write a mock unit test. Instead, write a quick, temporary script named verify_tools.py that imports your refactored tool functions and calls them manually with a known Spring Boot class name from the project (e.g., "AuthService" or similar). Print the JSON output to the terminal.
+​Run python verify_tools.py in the active virtual environment. Ensure the output is cleanly formatted and the tools successfully extract the hierarchy and dependencies from the Kùzu graph. Fix any index-out-of-bounds or mapping errors before reporting back.
+
+
+----------
+
 Context: The Kùzu migration unit tests passed, but the actual run_ingestion process failed with two errors. You need to fix your refactored code in codebase_rag/kuzu_database.py.
 ​Error 1: Dangling SET Clause in Cypher
 RuntimeError: Parser exception: Invalid input <MERGE (n:Project {name: $id}) SET >: expected rule oC_SingleQuery
