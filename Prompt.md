@@ -1,3 +1,30 @@
+Context: Your previous attempt at the Pass 4 optimization completely missed the mark. You modified method_override.py, but that is not where the bottleneck is. You also just copied an existing registry into a dictionary, which did not solve the O(N^2) loop.
+​The pipeline is completely freezing at the exact moment it prints: "--- Pass 4: Processing Function Calls from AST Cache ---".
+​Action 1: Find the Correct File
+Do a global workspace search for the exact string: "--- Pass 4: Processing Function Calls from AST Cache ---".
+Open the file that contains this print statement (it is likely graph_updater.py, definition_processor.py, or call_processor.py).
+​Action 2: Identify the Bottleneck
+Look at the block of code immediately below that print statement. It is taking a list of cached calls and attempting to cross-reference them against a list of known methods/functions.
+It is currently using a highly inefficient nested loop or a .find() / list comprehension to match them.
+​Action 3: Implement the True O(1) Fix
+Rewrite that specific block of code to use a pre-indexed dictionary.
+​Strict Implementation Pattern:
+
+# 1. BEFORE you loop over the cached calls, create an index of your methods:
+# (Assuming your methods list is called something like 'all_methods')
+method_index = {m.qualified_name: m for m in all_methods} 
+
+# 2. NOW loop over the calls and do an instant lookup:
+for call in cached_calls:
+    target_method = method_index.get(call.target_name)
+    if target_method:
+        # Build the CALLS relationship
+
+
+(Note: adapt the variable names to match what is actually in the file, but STRICTLY follow this pre-indexing logic).
+​Execute this fix on the correct file. Do not touch method_override.py.
+
+
 
 Context: The pipeline survived Pass 4, but crashed during the flush with Binder exception: Table CALLS does not exist. The schema inferencer is silently skipping the creation of the CALLS and OVERRIDES tables because the relationship data generated in Pass 4 is either missing from_label/to_label keys, or not being appended to the correct buffer. Additionally, the Pass 4 O(1) speed optimization has still not been implemented.
 ​Action 1: Fix the CALLS & OVERRIDES Data Shape
