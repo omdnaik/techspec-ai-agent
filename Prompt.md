@@ -1,15 +1,24 @@
+Final Optimizations & Bug Fixes
+​Context: We need to implement a few final structural fixes and performance optimizations across the ingestion pipeline to resolve a schema crash, a Python typo, and an O(N^2) bottleneck in Pass 4.
+​Action 1: Fix the set() Typo in Schema Inferencer
+Open schema_inferencer.py and locate the infer_edge_schema function.
+You initialized the properties accumulator as an empty dictionary instead of a set. Fix this:
+Change: edges_by_type[rel_type] = {"pairs": set(), "properties": {}}
+To: edges_by_type[rel_type] = {"pairs": set(), "properties": set()}
+Ensure infer_node_schema does not have this same mistake.
+​Action 2: Fix Edge Schema Column Generation
+In the same file (or wherever CREATE REL TABLE strings are built), you are forgetting to add property columns for relationships.
+Update the Cypher string builder so that if a relationship has properties (like field_name or injection_type), they are added to the schema.
+Example output needed: CREATE REL TABLE INJECTS (FROM Class TO Class, field_name STRING, injection_type STRING)
+​Action 3: Optimize Pass 4 (The O(N^2) Bottleneck) & Remove Prints
+Open the file responsible for Pass 4 (Call Graph processing).
+​The script is currently looping through a list to match method calls. Replace this with an O(1) dictionary lookup. Before the loop, build: method_lookup = {m["qualified_name"]: m for m in cached_methods}. Inside the loop, use method_lookup.get(...).
+​Search for and delete any hardcoded print("DEBUG CLASS...") or print("Spring DI injection...") statements that are causing I/O blocking.
+​Action 4: Fix the Error Handler
+Open kuzu_database.py and find _flush_rel_pattern_group.
+In the except Exception as e: block, remove the references to prop_names and individual_query. They are causing NameError and UnboundLocalError when the code crashes before those variables are defined.
+​Execute all four of these actions, verify the logic,
 
-
-Context: The Pass 4 optimization worked, but the pipeline crashed during the dynamic schema inference phase with AttributeError: 'dict' object has no attribute 'add'.
-​The Problem: > In schema_inferencer.py (specifically inside infer_edge_schema), you are using .add(prop_name) to collect unique property names for relationships. However, you accidentally initialized the "properties" accumulator as a dictionary ({}) instead of a set (set()).
-​Action 1: Fix the Initialization
-Open schema_inferencer.py and locate infer_edge_schema.
-Find where the edges_by_type data structure is initialized. Change the initialization of the properties accumulator from an empty dictionary to an empty set.
-​Incorrect: edges_by_type[rel_type] = {"pairs": set(), "properties": {}}
-Correct: edges_by_type[rel_type] = {"pairs": set(), "properties": set()}
-​Action 2: Audit Node Inferencer
-Briefly check the infer_node_schema function in the same file to ensure it isn't making the exact same {} vs set() mistake when accumulating node properties.
-​Execute this syntax fix
 
 
 
