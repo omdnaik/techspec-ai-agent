@@ -1,3 +1,33 @@
+Context: We removed the automatic ingestion run from the mcp-server command to make the server stateless, but we did not expose a standalone CLI command to trigger the Kùzu ingestion. Currently, the index command uses ProtobufFileIngestor (which is crashing due to a missing interface method).
+​Action 1: Patch the Protobuf Interface
+Open the file containing ProtobufFileIngestor (likely codebase_rag/services/protobuf_service.py or similar). Add a dummy method to satisfy the IngestorProtocol:
+
+def create_dynamic_schema_from_buffers(self, *args, **kwargs):
+    # Protobuf exports do not require dynamic schema generation.
+    pass
+
+Action 2: Create the ingest CLI Command
+Open codebase_rag/cli.py. Create a new Typer command called ingest. This command must trigger the GraphUpdater using the new Kùzu database pipeline.
+​Implementation Pattern:
+
+@app.command("ingest")
+def ingest_codebase(
+    repo_path: str = typer.Option(..., "--repo-path", help="Path to the repository to ingest")
+):
+    """Parse the codebase and build the immutable Kùzu database snapshot."""
+    typer.echo(f"Starting Kùzu ingestion for: {repo_path}")
+    
+    # Note: Ensure GraphUpdater is instantiated so it uses the KuzuIngestor 
+    # (or whatever your default backend for the GraphUpdater currently is, 
+    # as long as it points to Kuzu and not Protobuf).
+    updater = GraphUpdater(repo_path) 
+    updater.run()
+    typer.echo("Ingestion pipeline completed.")
+
+(Adjust the GraphUpdater instantiation parameters as needed to match your current architecture).
+
+----
+
 
 Context: We have successfully migrated the ingestion engine to Kùzu and established an immutable CI/CD architecture. We are now migrating the retrieval layer (the MCP Server). Currently, when the MCP server initializes, it is incorrectly attempting to connect to Memgraph/Neo4j and is triggering an outdated "incremental sync" on startup.
 ​Action 1: Kill the Startup Sync
