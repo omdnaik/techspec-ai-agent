@@ -1,4 +1,22 @@
 
+Context: The Dynamic Schema Inference engine successfully creates the tables and flushes data, but the pipeline crashes midway with Binder exception: Table Project does not exist. This is caused by legacy Neo4j "Periodic Flush" logic and error handlers attempting to write to Kùzu before the AST extraction finishes and the schema is dynamically built.
+​Action 1: Disable Periodic Flushing completely
+Open the main ingestion script (e.g., graph_updater.py or kuzu_database.py). Locate the file processing loop (where AST parsing happens).
+​Find any logic that triggers self.ingestor.flush_all(), flush_nodes(), or similar after a certain batch size (e.g., every 500 files).
+​Remove or comment out this periodic flush logic. All data MUST remain in nodes_buffer and edges_buffer until 100% of the files are parsed.
+​Action 2: Disable the "Best-Effort Flush" Error Handler
+Locate the global exception handler in the ingestion runner (where the log Attempting best-effort flush... is printed).
+​If the script catches an exception, it MUST NOT attempt to call flush_all(). Kùzu cannot accept data if the dynamic schema hasn't been initialized. Update the exception handler to simply log the error and cleanly close the database connection without flushing.
+​Action 3: Verify the Pipeline Sequence
+Ensure the ingestion pipeline follows this strict, linear sequence with no premature database writes:
+​Extract ALL files into nodes_buffer and edges_buffer (in memory).
+​Execute Node Schema Inferencer (creates Kùzu tables).
+​Execute Edge Schema Inferencer.
+​Call flush_all() strictly ONCE at the very end of the process.
+​Perform the Blue/Green directory swap.
+
+
+
 Context: The Dynamic Schema Inference worked perfectly and built the tables. However, the data flush crashed with Binder exception: Create node n expects primary key name as input. because the inferencer selected name as the PK for Folder, but the MERGE query builder used path. We must synchronize the Primary Key logic across both systems.
 ​Action 1: Define a Central Primary Key Map
 At the top of your database module (e.g., kuzu_database.py), define a strict mapping for Primary Keys so all functions agree on what field identifies what node:
