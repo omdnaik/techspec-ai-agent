@@ -1,4 +1,34 @@
 
+Context: The ingestion pipeline is failing during dynamic schema creation with Binder exception: Table Function does not exist. This happens because the edge buffers contain relationship pairs (like FROM Method TO Function) for node labels that do not exist in the codebase, meaning their corresponding Node Tables were never generated. Kùzu strictly requires all Node Tables referenced in a CREATE REL TABLE statement to exist.
+​Action 1: Locate the Schema Generation Logic
+Open codebase_rag/kuzu_database.py. Locate the create_dynamic_schema_from_buffers method (or wherever the edge_schemas string like CREATE REL TABLE ... (FROM X TO Y, ...) is being constructed).
+​Action 2: Filter Invalid Relationship Pairs
+You must cross-reference the relationship pairs against the known node schemas.
+​Implementation Logic:
+​You already have a dictionary or set of the node labels that are being created (e.g., the keys of node_schemas or grouped_nodes).
+​When iterating over the grouped edges to build the FROM {from_label} TO {to_label} pairs for a specific relationship type, filter out any pairs where the from_label OR the to_label is NOT present in your list of valid node labels.
+​Example approach:
+valid_node_labels = set(grouped_nodes.keys()) # All node types actually present in the data
+
+valid_pairs_for_rel = set()
+for edge in grouped_edges[rel_type]:
+    from_lbl = edge.get("from_label")
+    to_lbl = edge.get("to_label")
+    
+    # ONLY add the pair if both tables will actually exist in the database
+    if from_lbl in valid_node_labels and to_lbl in valid_node_labels:
+        valid_pairs_for_rel.add(f"FROM {from_lbl} TO {to_lbl}")
+
+if not valid_pairs_for_rel:
+    continue # Skip creating this relationship table entirely if no valid pairs exist
+
+# Build the final string...
+rel_schema = f"CREATE REL TABLE {rel_type} ({', '.join(valid_pairs_for_rel)})"
+
+Execute this fix so the inferencer only generates schemas for referentially intact relationships.
+
+
+
 Context: During recent refactoring, the NodeType Enum was accidentally removed or renamed in codebase_rag/constants.py. This is causing a catastrophic AttributeError during Pass 1/Pass 2, as the AST parser cannot tag nodes. Every file is failing ingestion.
 ​Action 1: Inspect constants.py
 Open codebase_rag/constants.py. Look for NodeLabel and NodeType.
