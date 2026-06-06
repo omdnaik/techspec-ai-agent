@@ -1,4 +1,30 @@
 
+Context: We are pivoting our architecture to a "Late-Bound Schema" approach. Because our largest microservice is around 50k LOC, we can easily hold the entire AST graph in memory. We will let the AST and Spring parsers extract everything, aggregate the data in memory to infer the exact schema required, build the Kùzu tables dynamically, and then flush the data.
+​Action 1: Strip Hardcoded Schemas
+Open kuzu_schema.py. Delete the hardcoded NODE_TABLE_SCHEMAS and any hardcoded CREATE REL TABLE definitions. We will no longer dictate the schema upfront.
+​Action 2: The In-Memory Buffer
+Open kuzu_database.py (or the main ingestion orchestrator). Update the pipeline so that the AST extraction phase does not write to the database immediately. Instead, it should aggregate all extracted nodes and relationships into in-memory lists (e.g., nodes_buffer and edges_buffer).
+​Action 3: The Node Schema Inferencer
+Write a function that iterates over the nodes_buffer to build CREATE NODE TABLE commands:
+​Group nodes by label (e.g., Class, Method).
+​For each label, iterate through all instances and build a mathematical union of every property key discovered.
+​Infer Kùzu data types dynamically: If the Python value is int, map to INT64. If bool, map to BOOLEAN. For everything else (including lists/dicts serialized with json.dumps), map to STRING.
+​Critical: Kùzu requires a Primary Key. Program the inferencer to designate name, qualified_name, or path as the PRIMARY KEY depending on what is available in that label's property union.
+​Generate and execute the Cypher string on the staging database. (Example: CREATE NODE TABLE Class (name STRING, is_spring_bean BOOLEAN, start_line INT64, PRIMARY KEY(name)))
+​Action 4: The Edge Schema Inferencer
+Write a function that iterates over the edges_buffer to build CREATE REL TABLE commands:
+​Group edges by relationship type (e.g., contains, injects).
+​For each relationship type, catalog every unique (source_label, target_label) pairing.
+​Generate the multi-pair Cypher string. (Example: CREATE REL TABLE contains (FROM Project TO Module, FROM Folder TO File)).
+​Execute these strings on the staging database.
+​Action 5: The Final Flush
+Once the dynamic schema is built in the staging database, iterate through the nodes_buffer and edges_buffer one last time to execute the MERGE statements and flush the data. You no longer need a whitelist filter, because the database schema was built specifically to perfectly match this exact payload.
+
+
+
+
+
+
 Dynamic Schema Inference
 ​Context: We are abandoning hardcoded schemas. We want our Kùzu database to dynamically adapt to whatever the AST and Spring dependency parsers extract. We will use a "Late-Bound Schema" approach.
 ​Action 1: Remove Hardcoded Schemas
