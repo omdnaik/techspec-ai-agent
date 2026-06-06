@@ -1,4 +1,40 @@
 
+Context: The Dynamic Schema Inference worked perfectly and built the tables. However, the data flush crashed with Binder exception: Create node n expects primary key name as input. because the inferencer selected name as the PK for Folder, but the MERGE query builder used path. We must synchronize the Primary Key logic across both systems.
+​Action 1: Define a Central Primary Key Map
+At the top of your database module (e.g., kuzu_database.py), define a strict mapping for Primary Keys so all functions agree on what field identifies what node:
+
+PK_MAP = {
+    "Project": "name",
+    "Folder": "path",
+    "File": "path",
+    "Module": "qualified_name",
+    "Class": "qualified_name",
+    "Interface": "qualified_name",
+    "Enum": "qualified_name",
+    "Method": "qualified_name",
+    "Field": "qualified_name"
+}
+
+(Note: If a label is not in this map, fallback to "name").
+​Action 2: Update the Schema Inferencer
+Locate your dynamic node schema builder. Instead of guessing the PK, it MUST use the PK_MAP.
+When building the CREATE NODE TABLE string:
+​Determine the PK for the current label using pk_field = PK_MAP.get(label, "name").
+​Critical: Ensure pk_field is forcibly added to the inferred properties as a STRING type, even if it was somehow missing from the property union.
+​Generate the table using that explicit PK: CREATE NODE TABLE {label} (... , PRIMARY KEY({pk_field})).
+​Action 3: Update the MERGE Query Builder
+Locate _flush_node_label_group. Update the dynamic Cypher string builder so it also strictly uses the PK_MAP.
+Change the MERGE clause generation from guessing the ID field to this:
+
+pk_field = PK_MAP.get(label, "name")
+query = f"MERGE (n:{label} {{{pk_field}: $id}}) "
+
+
+Execute these changes. Ensure the staging database is wiped before initialization, and run the ingestion process again.
+
+
+
+------++
 Context: We are pivoting our architecture to a "Late-Bound Schema" approach. Because our largest microservice is around 50k LOC, we can easily hold the entire AST graph in memory. We will let the AST and Spring parsers extract everything, aggregate the data in memory to infer the exact schema required, build the Kùzu tables dynamically, and then flush the data.
 ​Action 1: Strip Hardcoded Schemas
 Open kuzu_schema.py. Delete the hardcoded NODE_TABLE_SCHEMAS and any hardcoded CREATE REL TABLE definitions. We will no longer dictate the schema upfront.
