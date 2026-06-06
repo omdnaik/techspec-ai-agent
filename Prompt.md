@@ -1,3 +1,26 @@
+Context: The node ingestion phase successfully completed! However, the pipeline crashed during the relationship flushing phase (_flush_rel_pattern_group) with a Parser exception: extraneous input 'INSERT'.
+​The Problem: You hallucinated SQL syntax inside a graph database. You wrote INSERT INTO CONTAINS_FOLDER, which is entirely invalid in OpenCypher. Kùzu requires standard MATCH ... MERGE syntax to create relationships.
+​Action 1: Fix the Relationship Query Builder
+Open kuzu_database.py and locate _flush_rel_pattern_group. Completely rewrite the query string builder. To insert a relationship in Kùzu, you must use this exact Cypher structure:
+
+MATCH (src:SourceLabel {source_pk: $source_val}), (tgt:TargetLabel {target_pk: $target_val})
+MERGE (src)-[r:REL_TYPE]->(tgt)
+
+Action 2: Dynamic Primary Key Resolution
+To make the MATCH clause work, Kùzu requires matching on the exact Primary Key defined in the schema. You cannot hardcode name for everything.
+​Create a helper function (e.g., _get_pk_for_label(label)) that inspects kuzu_schema.py.
+​Map the correct PK for each node type (e.g., Folder and File use path, Module uses qualified_name, Class uses name, etc.).
+​Inject these correct PK property names into the MATCH string dynamically based on the source and target labels of the relationship batch.
+​Action 3: Relationship Properties & Whitelisting
+Relationships in Kùzu can also have properties (though less common). If the params_list contains properties for the relationship itself, apply the exact same JSON serialization and schema whitelisting logic you implemented for nodes. Append them using SET r.prop_name = $val.
+
+
+
+
+
+
+
+
 Context: Our Kùzu ingestion is failing because the AST parser is generating properties that are not defined in our strictly-typed schema. We are going to implement a dual-layer fix: a comprehensive schema based on our legacy Neo4j database, and a strict Whitelist Filter at the database insertion boundary.
 ​Action 1: The Master Schema Definition
 Open kuzu_schema.py. You must update the NODE_TABLE_SCHEMAS strings. We have exactly 20 known properties from our legacy system. Distribute these properties logically across the node tables (Class, Method, File, Folder, Module, Field, etc.). Default to adding them if you are unsure if a node uses them.
