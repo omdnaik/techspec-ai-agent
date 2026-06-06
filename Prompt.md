@@ -1,4 +1,44 @@
 
+Context: The UNWIND batching optimization failed with two errors: a Cypher syntax error (SET r += $props is invalid in Kùzu) and a Type error (STRUCT incompatibility).
+​The Problem: > 1. Kùzu does not support dynamic map projection (+=). Properties must be set explicitly.
+2. Kùzu requires all dictionaries in an UNWIND list parameter to have the exact same keys. If props dictionaries have different keys across the batch, it throws a STRUCT mismatch.
+​Action 1: Pad the Dictionaries for Uniformity
+Open kuzu_database.py and locate the UNWIND logic in _flush_rel_pattern_group (and apply similar fixes to nodes if they use UNWIND).
+Before passing $params to Kùzu, you must find the union of all keys and pad the dictionaries so they are identical:
+
+# 1. Find all possible property keys in this batch
+all_keys = set()
+for param in params_list:
+    all_keys.update(param.get("props", {}).keys())
+
+# 2. Pad every dictionary with None for missing keys so Kuzu STRUCTs match perfectly
+for param in params_list:
+    if "props" not in param:
+        param["props"] = {}
+    for k in all_keys:
+        if k not in param["props"]:
+            param["props"][k] = None
+
+
+Action 2: Build an Explicit SET Clause
+Do not use SET r += $props. Dynamically build the assignment string based on the all_keys union:
+
+
+set_clauses = [f"r.{k} = param.props.{k}" for k in all_keys]
+set_string = "SET " + ", ".join(set_clauses) if set_clauses else ""
+
+query = f"""
+UNWIND $params AS param 
+MATCH (src:{src_label} {{{src_pk}: param.from_val}}), (tgt:{tgt_label} {{{tgt_pk}: param.to_val}}) 
+MERGE (src)-[r:{rel_type}]->(tgt) 
+{set_string}
+"""
+
+Execute these changes to ensure Kùzu receives uniform structs and explicit assignments
+
+
+
+
 Context: We have identified the exact cause of the 20-minute ingestion time. During Pass 1 (AST Extraction), the logs show it takes exactly 2.0 seconds between each "Created IMPORTS relationship" log. This is because the logic verifying the imports is spawning OS-level child processes or doing heavy local resolutions.
 ​Action 1: Find the Import Resolver
 Open the Java AST parsing logic (likely in parsers/java_parser.py, definition_processor.py, or wherever IMPORTS relationships are generated). Locate the function that checks if an import is a JDK dependency or attempts to verify the class locally.
