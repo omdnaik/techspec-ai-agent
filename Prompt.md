@@ -1,4 +1,24 @@
 
+Context: We have identified the exact cause of the 20-minute ingestion time. During Pass 1 (AST Extraction), the logs show it takes exactly 2.0 seconds between each "Created IMPORTS relationship" log. This is because the logic verifying the imports is spawning OS-level child processes or doing heavy local resolutions.
+​Action 1: Find the Import Resolver
+Open the Java AST parsing logic (likely in parsers/java_parser.py, definition_processor.py, or wherever IMPORTS relationships are generated). Locate the function that checks if an import is a JDK dependency or attempts to verify the class locally.
+​Action 2: Delete the Child Process Logic
+Completely rip out any logic inside that function using subprocess, local classpath resolutions, or heavy caching mechanisms.
+​Action 3: Implement Static Tuple Checking
+Replace the resolution logic with a pure, in-memory string prefix check. It must instantly return a boolean or categorization without touching the OS.
+JDK_PREFIXES = (
+    "java.", "javax.", "jdk.", "sun.", "com.sun.", "org.xml.", "org.w3c."
+)
+
+def is_jdk_dependency(import_path: str) -> bool:
+    """Instant $O(1)$ C-optimized string match. No child processes allowed."""
+    return import_path.startswith(JDK_PREFIXES)
+
+
+
+
+
+
 Context: The Dynamic Schema Inference engine successfully creates the tables and flushes data, but the pipeline crashes midway with Binder exception: Table Project does not exist. This is caused by legacy Neo4j "Periodic Flush" logic and error handlers attempting to write to Kùzu before the AST extraction finishes and the schema is dynamically built.
 ​Action 1: Disable Periodic Flushing completely
 Open the main ingestion script (e.g., graph_updater.py or kuzu_database.py). Locate the file processing loop (where AST parsing happens).
