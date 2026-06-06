@@ -1,4 +1,21 @@
 
+ Fixing Edge Schema Properties & Error Handlers
+​Context: The pipeline crashed during the relationship flush with Binder exception: Cannot find property field_name for r.. This was followed by a Python crash in the exception handler: NameError: name 'prop_names' is not defined and UnboundLocalError: local variable 'individual_query'.
+​The Problem: > 1. The Dynamic Edge Schema Inferencer is failing to add property columns to the CREATE REL TABLE Cypher commands.
+2. The try/except block in _flush_rel_pattern_group references undefined variables when an error occurs.
+​Action 1: Fix the Edge Schema Inferencer
+Locate the function that dynamically builds the CREATE REL TABLE commands.
+​You must implement the exact same property union and type inference logic for relationships that you did for nodes.
+​If a relationship type (like INJECTS) has properties in the edges_buffer (like field_name, injection_type), they MUST be appended to the creation string.
+​Correct Kùzu Syntax Example: CREATE REL TABLE INJECTS (FROM Class TO Class, field_name STRING, injection_type STRING)
+​Action 2: Fix the Sloppy Error Handler
+Open kuzu_database.py and locate _flush_rel_pattern_group.
+​Look at the except Exception as e: block.
+​Completely remove the references to prop_names and individual_query, as they are causing UnboundLocalError and NameError if the code crashes before they are instantiated.
+​Simply log the query, the all_keys union, and the exception e.
+​Action 3: Double Check Padding
+Ensure that the dictionary padding logic we added earlier (padding missing keys with None) is still intact so the STRUCT arrays remain perfectly uniform.
+
 Context: The UNWIND batching optimization failed with two errors: a Cypher syntax error (SET r += $props is invalid in Kùzu) and a Type error (STRUCT incompatibility).
 ​The Problem: > 1. Kùzu does not support dynamic map projection (+=). Properties must be set explicitly.
 2. Kùzu requires all dictionaries in an UNWIND list parameter to have the exact same keys. If props dictionaries have different keys across the batch, it throws a STRUCT mismatch.
