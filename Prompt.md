@@ -1,4 +1,18 @@
 
+
+Context: The Pass 4 optimization worked, but the pipeline crashed during the dynamic schema inference phase with AttributeError: 'dict' object has no attribute 'add'.
+​The Problem: > In schema_inferencer.py (specifically inside infer_edge_schema), you are using .add(prop_name) to collect unique property names for relationships. However, you accidentally initialized the "properties" accumulator as a dictionary ({}) instead of a set (set()).
+​Action 1: Fix the Initialization
+Open schema_inferencer.py and locate infer_edge_schema.
+Find where the edges_by_type data structure is initialized. Change the initialization of the properties accumulator from an empty dictionary to an empty set.
+​Incorrect: edges_by_type[rel_type] = {"pairs": set(), "properties": {}}
+Correct: edges_by_type[rel_type] = {"pairs": set(), "properties": set()}
+​Action 2: Audit Node Inferencer
+Briefly check the infer_node_schema function in the same file to ensure it isn't making the exact same {} vs set() mistake when accumulating node properties.
+​Execute this syntax fix
+
+
+
  Fixing Edge Schema Properties & Error Handlers
 ​Context: The pipeline crashed during the relationship flush with Binder exception: Cannot find property field_name for r.. This was followed by a Python crash in the exception handler: NameError: name 'prop_names' is not defined and UnboundLocalError: local variable 'individual_query'.
 ​The Problem: > 1. The Dynamic Edge Schema Inferencer is failing to add property columns to the CREATE REL TABLE Cypher commands.
