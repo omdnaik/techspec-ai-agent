@@ -1,3 +1,30 @@
+
+Context: The pipeline survived Pass 4, but crashed during the flush with Binder exception: Table CALLS does not exist. The schema inferencer is silently skipping the creation of the CALLS and OVERRIDES tables because the relationship data generated in Pass 4 is either missing from_label/to_label keys, or not being appended to the correct buffer. Additionally, the Pass 4 O(1) speed optimization has still not been implemented.
+​Action 1: Fix the CALLS & OVERRIDES Data Shape
+Open the file responsible for Pass 4 (Call Graph and Overrides generation).
+When creating relationships (e.g., rel = {"type": "CALLS", ...}), you MUST explicitly set "from_label": "Method" (or Function) and "to_label": "Method".
+Ensure these relationships are appended to the exact same edges_buffer that the schema inferencer iterates over.
+​Action 2: Make the Schema Inferencer "Loud"
+Open schema_inferencer.py. Right before session.execute(query) is called to create the tables, add logger.info(f"Executing schema: {query}").
+Do not swallow exceptions in this block. If a schema creation query fails, it must throw an error loudly so we can see the Cypher syntax issue.
+​Action 3: Force the Pass 4 O(N^2) Optimization
+You must fix the CPU bottleneck in Pass 4. Replace the nested loops/list searches with an O(1) dictionary lookup.
+Strict Implementation Pattern:
+
+# 1. BEFORE the Pass 4 loop begins:
+method_index = {m["qualified_name"]: m for m in cached_methods}
+
+# 2. INSIDE the Pass 4 loop:
+for call in cached_calls:
+    target = method_index.get(call["target_name"])
+    if target:
+        # build the CALLS relationship with explicit labels!
+        rel = {"type": "CALLS", "from_label": "Method", "to_label": "Method", ...}
+
+
+
+
+
 Final Optimizations & Bug Fixes
 ​Context: We need to implement a few final structural fixes and performance optimizations across the ingestion pipeline to resolve a schema crash, a Python typo, and an O(N^2) bottleneck in Pass 4.
 ​Action 1: Fix the set() Typo in Schema Inferencer
