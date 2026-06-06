@@ -1,3 +1,31 @@
+
+Dynamic Schema Inference
+​Context: We are abandoning hardcoded schemas. We want our Kùzu database to dynamically adapt to whatever the AST and Spring dependency parsers extract. We will use a "Late-Bound Schema" approach.
+​Action 1: Remove Hardcoded Schemas
+Open kuzu_schema.py. Delete the massive NODE_TABLE_SCHEMAS strings and hardcoded CREATE REL TABLE definitions we made earlier. We are going to generate these programmatically.
+​Action 2: Implement the Node Schema Inferencer
+In your ingestion script (between the extraction phase and the database flush), implement a function that scans the extracted nodes and builds the CREATE NODE TABLE commands:
+​Group all extracted nodes by their label (e.g., Class, Method).
+​For each label, find the union of all property keys across all instances.
+​Infer the Kùzu data type for each key (if Python int -> INT64, if bool -> BOOLEAN, else -> STRING).
+​Identify the Primary Key. (You must ensure every node has a name, path, or qualified_name to act as the PK).
+​Generate and execute the CREATE NODE TABLE {label} ({inferred_props}, PRIMARY KEY({pk_name})) Cypher string on the staging Kùzu database.
+​Action 3: Implement the Edge Schema Inferencer
+Implement a function that scans the extracted relationships to build the CREATE REL TABLE commands:
+​Group all extracted edges by their type (e.g., CONTAINS, CALLS).
+​For each edge type, iterate through the extracted data to catalog every unique (source_label, target_label) pairing.
+​Generate the multi-pair Cypher string. Example: CREATE REL TABLE contains (FROM Project TO Module, FROM Folder TO File).
+​If relationships have properties, run the same property union/inference logic from Action 2.
+​Execute these strings on the staging database.
+​Action 4: Pipeline Execution
+​Run the AST extraction and Spring pass entirely in memory.
+​Run the dynamic schema inferencer to build the Kùzu staging database.
+​Flush the in-memory data to Kùzu using the exact properties inferred. (You no longer need a strict Whitelist Filter that drops properties, as the schema perfectly matches the payload).
+​Perform the atomic swap to promote staging to live.
+
+
+
+
 Context: The node ingestion phase successfully completed! However, the pipeline crashed during the relationship flushing phase (_flush_rel_pattern_group) with a Parser exception: extraneous input 'INSERT'.
 ​The Problem: You hallucinated SQL syntax inside a graph database. You wrote INSERT INTO CONTAINS_FOLDER, which is entirely invalid in OpenCypher. Kùzu requires standard MATCH ... MERGE syntax to create relationships.
 ​Action 1: Fix the Relationship Query Builder
