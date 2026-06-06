@@ -1,3 +1,28 @@
+
+Context: During recent refactoring, the NodeType Enum was accidentally removed or renamed in codebase_rag/constants.py. This is causing a catastrophic AttributeError during Pass 1/Pass 2, as the AST parser cannot tag nodes. Every file is failing ingestion.
+​Action 1: Inspect constants.py
+Open codebase_rag/constants.py. Look for NodeLabel and NodeType.
+​Action 2: Restore NodeType
+The codebase requires both NodeType and NodeLabel to exist (since call_processor.py explicitly does a conversion between the two).
+If NodeType is missing, you must restore it exactly as a string Enum. It should look something like this:
+class NodeType(str, Enum):
+    CLASS = "Class"
+    METHOD = "Method"
+    INTERFACE = "Interface"
+    ANNOTATION = "Annotation"
+    FILE = "File"
+    FOLDER = "Folder"
+    PROJECT = "Project"
+    FUNCTION = "Function"
+    MODULE = "Module"
+    # Add any other missing node types that the parser expects
+
+(Note: If it was completely renamed to NodeLabel, ensure NodeType is added back in alongside it so the parsers don't break).
+​Action 3: Verify the Fix
+Run python -m py_compile codebase_rag/constants.py to ensure there are no syntax errors. Do not run the full ingestion, just fix the constants file and confirm it is saved.
+
+
+
 Context: We removed the automatic ingestion run from the mcp-server command to make the server stateless, but we did not expose a standalone CLI command to trigger the Kùzu ingestion. Currently, the index command uses ProtobufFileIngestor (which is crashing due to a missing interface method).
 ​Action 1: Patch the Protobuf Interface
 Open the file containing ProtobufFileIngestor (likely codebase_rag/services/protobuf_service.py or similar). Add a dummy method to satisfy the IngestorProtocol:
