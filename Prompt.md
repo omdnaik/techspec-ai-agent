@@ -1,3 +1,43 @@
+Context: You are no longer in Read-Only mode. We have identified the bottleneck. When get_class_method returns an empty list for external dependencies (cache miss), it evaluates to False, causing the code to fall through to the O(N) linear scan thousands of times. We must bypass the fallback if the index is already populated.
+​Action 1: Replace the Resolver Method
+Open codebase_rag/parsers/type_resolver.py.
+Replace the ENTIRE _find_registry_entries_under method inside JavaTypeResolverMixin with the exact Python code below. Do not change a single line of this snippet
+
+    def _find_registry_entries_under(self, prefix: str) -> Iterable[tuple[str, str]]:
+        # 1. O(1) Fast Path Lookup
+        methods = getattr(self.function_registry, "get_class_method", lambda x: None)(prefix)
+        if methods:
+            return methods
+            
+        # 2. THE CACHE MISS FIX (Bypass the O(N) Loop)
+        # If the index is built but the prefix wasn't found, it is an external dependency.
+        # Return immediately instead of falling through to the linear scan.
+        if hasattr(self.function_registry, "_class_method_index") and getattr(self.function_registry, "_class_method_index"):
+            return []
+            
+        # 3. Legacy Fallbacks (Only runs if index was never initialized)
+        finder = getattr(self.function_registry, cs.METHOD_FIND_WITH_PREFIX, None)
+        if callable(finder):
+            if matches := list(finder(prefix)):
+                return matches
+                
+        items = getattr(self.function_registry, cs.METHOD_ITEMS, None)
+        if callable(items):
+            prefix_with_dot = f"{prefix}{cs.SEPARATOR_DOT}"
+            return [
+                (qn, method_type)
+                for qn, method_type in items()
+                if qn.startswith(prefix_with_dot) or qn == prefix
+            ]
+        return []
+
+Action 2: Execute and Exit
+Save the file. Do not attempt to analyze or modify any other files or methods.
+
+
+
+
+
 Action 1: NO EDITING ALLOWED
 You are currently in Read-Only mode. You are strictly forbidden from editing, optimizing, or modifying any files.
 ​Action 2: Dump the Index Builder
