@@ -1,3 +1,30 @@
+Context: The O(N) fallback loops are still triggering because our Fast Path check (hasattr(self.function_registry, '_class_method_index')) is evaluating to False. The dictionary is either attached to the wrong object, or the rebuild_class_method_index() method is never actually being called before Pass 4 runs.
+​Action 1: Find the Initialization
+Search the codebase for where rebuild_class_method_index() is defined, and where (or if) it is actually being called.
+​Action 2: Force Initialization (Lazy Loading)
+Open codebase_rag/parsers/type_resolver.py. Inside JavaTypeResolverMixin, modify _find_registry_entries_under to lazily initialize the dictionary if it is missing:
+
+    def _find_registry_entries_under(self, prefix: str) -> Iterable[tuple[str, str]]:
+        # 1. FORCE INITIALIZATION IF MISSING
+        if not hasattr(self.function_registry, "_class_method_index"):
+            # If Roo put the rebuild function somewhere else, call it here!
+            # Example: self.function_registry.rebuild_class_method_index()
+            pass # (Roo: Replace this pass with the actual call to build the index)
+
+        # 2. AGGRESSIVE FAST PATH 
+        if hasattr(self.function_registry, "_class_method_index"):
+            index = getattr(self.function_registry, "_class_method_index")
+            if isinstance(index, dict):
+                return index.get(prefix, [])
+                
+        # 3. LEGACY FALLBACK
+        # ... (Keep the rest of the legacy fallback here)
+
+Action 3: Do the same for find_ending_with
+Apply the exact same lazy initialization for _simple_name_lookup inside find_ending_with.
+​Execute this patch so the dictionaries are guaranteed to exist before the Fast Path checks them.
+
+
 Context: You are no longer in Read-Only mode. We have identified the bottleneck. When get_class_method returns an empty list for external dependencies (cache miss), it evaluates to False, causing the code to fall through to the O(N) linear scan thousands of times. We must bypass the fallback if the index is already populated.
 ​Action 1: Replace the Resolver Method
 Open codebase_rag/parsers/type_resolver.py.
