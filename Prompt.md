@@ -1,4 +1,27 @@
 
+Context: You previously added an index to optimize Pass 4, logging Rebuilding class method index for O(1) call resolution.... However, the process is still hanging for over a minute, indicating the O(N^2) nested loops were never actually removed from the code.
+​Action 1: Locate the Call Processing Loop
+Open codebase_rag/parsers/call_processor.py (or wherever Pass 4: Processing Function Calls is implemented).
+​Action 2: Eradicate the Nested Loops
+Look directly below the log statement --- Pass 4: Processing Function Calls from AST Cache ---.
+You will find a loop starting with for call in all_function_calls:.
+INSIDE this loop, completely DELETE any nested loops iterating over classes or methods (e.g., for class_node in all_extracted_classes: or for method in class_node.get('methods')).
+​Action 3: Implement Pure Dictionary Lookup
+The inside of the for call in all_function_calls: loop must rely only on the dictionary:
+
+for call in all_function_calls:
+    target_key = f"{call['target_class']}.{call['target_method']}"
+    resolved_method = _class_method_index.get(target_key)
+    
+    if resolved_method:
+        # Append the CALLS edge to your buffer
+        pass # (Keep your existing edge appending logic here)
+
+
+Execute this fix. Ensure absolutely no nested for loops exist inside the call resolution block.
+
+
+
 Context: We have two distinct issues. First, Pass 4 is hanging due to an O(N^2) nested loop that lost its O(1) dictionary optimization during recent refactoring. Second, Kùzu is throwing a Binder exception during _flush_rel_pattern_group because the edge data buffer contains invalid relationship targets (e.g., tgt:Function) that were correctly excluded from the schema.
 ​Action 1: Restore Pass 4 Optimization
 Open the file handling Pass 4 (likely codebase_rag/parsers/call_processor.py or GraphUpdater).
