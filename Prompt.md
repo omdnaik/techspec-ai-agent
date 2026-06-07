@@ -1,3 +1,11 @@
+Action 1: NO EDITING ALLOWED
+You are currently in Read-Only mode. You are strictly forbidden from editing, optimizing, or modifying any files.
+​Action 2: Dump the Index Builder
+Open codebase_rag/parsers/type_resolver.py (or registry.py, wherever FunctionRegistryTrie lives).
+Output the exact raw Python code for the rebuild_class_method_index() method you just created.
+​Action 3: Dump the Resolver
+Output the exact raw Python code for _find_registry_entries_under() (inside JavaTypeResolverMixin).
+​Output the code in markdown blocks and await further instructions. Do not explain the code.
 
 Context: You correctly identified the bottleneck! The delay is being caused by _find_registry_entries_under executing an O(N) list comprehension for every single function call inside the main call_processor.py loop. We must bypass this slow fallback by using the _class_method_index as an O(1) Fast Path.
 ​Action 1: Locate the Call Resolution Loop
