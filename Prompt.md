@@ -1,4 +1,37 @@
 
+Context: We have two distinct issues. First, Pass 4 is hanging due to an O(N^2) nested loop that lost its O(1) dictionary optimization during recent refactoring. Second, Kùzu is throwing a Binder exception during _flush_rel_pattern_group because the edge data buffer contains invalid relationship targets (e.g., tgt:Function) that were correctly excluded from the schema.
+​Action 1: Restore Pass 4 Optimization
+Open the file handling Pass 4 (likely codebase_rag/parsers/call_processor.py or GraphUpdater).
+Immediately before the loop that resolves function calls, rebuild the O(1) index:
+_class_method_index = {}
+for class_node in all_extracted_classes:
+    for method in class_node.get("methods", []):
+        key = f"{class_node['name']}.{method['name']}"
+        _class_method_index[key] = method
+
+Update the call resolution loop to use _class_method_index.get(target_key) instead of nested for loops.
+​Action 2: Sanitize the Data Flusher
+Open codebase_rag/kuzu_database.py. Locate the edge flushing logic (likely in _flush_edges_buffer or _flush_rel_pattern_group).
+Before executing the UNWIND ... MERGE queries for a specific relationship type, filter the grouped_edges.
+You must only attempt to flush an edge if BOTH its from_label and to_label actually exist in the database (you can check this against self.node_schemas.keys() or the valid labels created during schema generation).
+​Implementation Logic:
+
+valid_labels = set(self.node_schemas.keys()) # Or however you track created node tables
+
+valid_edges_to_flush = []
+for edge in edges:
+    if edge.get('from_label') in valid_labels and edge.get('to_label') in valid_labels:
+        valid_edges_to_flush.append(edge)
+
+# Only proceed with the UNWIND query if valid_edges_to_flush has items
+if valid_edges_to_flush:
+    # Execute the UNWIND ... MERGE using valid_edges_to_flush
+
+
+Execute these two fixes.
+
+
+
 Context: The ingestion pipeline is failing during dynamic schema creation with Binder exception: Table Function does not exist. This happens because the edge buffers contain relationship pairs (like FROM Method TO Function) for node labels that do not exist in the codebase, meaning their corresponding Node Tables were never generated. Kùzu strictly requires all Node Tables referenced in a CREATE REL TABLE statement to exist.
 ​Action 1: Locate the Schema Generation Logic
 Open codebase_rag/kuzu_database.py. Locate the create_dynamic_schema_from_buffers method (or wherever the edge_schemas string like CREATE REL TABLE ... (FROM X TO Y, ...) is being constructed).
