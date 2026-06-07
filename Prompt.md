@@ -1,4 +1,34 @@
 
+Context: You correctly identified the bottleneck! The delay is being caused by _find_registry_entries_under executing an O(N) list comprehension for every single function call inside the main call_processor.py loop. We must bypass this slow fallback by using the _class_method_index as an O(1) Fast Path.
+​Action 1: Locate the Call Resolution Loop
+Open codebase_rag/parsers/call_processor.py (or wherever the for call in all_function_calls: loop is located).
+​Action 2: Implement the Fast Path Override
+Inside the loop, immediately before the code invokes the type_resolver, FunctionRegistryTrie, or any slow matching logic, intercept it with an exact dictionary lookup.
+​Implementation Logic:
+
+for call in all_function_calls:
+    # Construct the exact match key
+    target_key = f"{call.get('target_class')}.{call.get('target_method')}"
+    
+    # 1. ATTEMPT FAST PATH: O(1) Dictionary Lookup
+    # (Ensure _class_method_index is accessible in this scope)
+    resolved_node = _class_method_index.get(target_key)
+    
+    if resolved_node:
+        # FAST PATH SUCCESS: Use resolved_node to create the CALLS edge!
+        # ---> SKIP the type_resolver entirely for this iteration <---
+        continue 
+        
+    # 2. SLOW PATH FALLBACK
+    # If the fast path misses (e.g., wildcard imports or complex inheritance), 
+    # let it fall through to the existing type_resolver logic.
+    ... 
+
+Action 3: Scope Check
+Ensure that _class_method_index is passed into call_processor.py or is accessible as a class attribute so the Fast Path can read it. Execute this update.
+
+
+
 Context: You previously added an index to optimize Pass 4, logging Rebuilding class method index for O(1) call resolution.... However, the process is still hanging for over a minute, indicating the O(N^2) nested loops were never actually removed from the code.
 ​Action 1: Locate the Call Processing Loop
 Open codebase_rag/parsers/call_processor.py (or wherever Pass 4: Processing Function Calls is implemented).
