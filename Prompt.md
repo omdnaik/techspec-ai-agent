@@ -1,3 +1,50 @@
+Here is a single, comprehensive, highly restrictive system prompt tailored specifically for Roo Code's **Orchestrator Mode**.
+It handles all three tasks synchronously while enforcing strict guardrails to prevent it from wandering back into the parsing or database ingestion logic.
+### Roo Code Orchestrator Prompt: Demo Preparation Target (4:00 PM)
+```text
+Objective: Prepare the MCP server, tools, and configurations for a critical 4:00 PM live demo. You must align the data paths, update tool prompt instructions for Kùzu DB compliance, and verify the server boots correctly. Do not touch any AST parsing, indexing, or ingestion files.
+
+TASK 1: ALIGN MCP SERVER DATABASE PATH
+1. Open the file where your MCP server initializes the Kùzu database connection client (e.g., `codebase_rag/mcp_server/server.py` or similar).
+2. Locate the `kuzu.Database(...)` call block.
+3. Update the database path calculation to explicitly point to the project root directory where the virtual environment creates 'graph.kz'. Use this exact strategy:
+   ```python
+   from pathlib import Path
+   PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent # Adjust levels to reach project root
+   DATABASE_PATH = str(PROJECT_ROOT / "graph.kz")
+
+```
+ 4. Add a logger.info(f"[DEMO CONFIG] Loading Kùzu DB from: {DATABASE_PATH}") statement right before initialization to ensure visibility on startup.
+TASK 2: UPDATE AGENT TOOLS FOR KÙZU CYPHER COMPLIANCE
+ 1. Locate the definitions for the LLM tools or system prompts that generate Cypher queries (e.g., in codebase_rag/tools/ or mcp_server/tools.py).
+ 2. Append these explicit instruction constraints to the tool's system message template to prevent runtime Kùzu syntax errors:
+   ```text
+   CRITICAL CYPHER SYNTAX RULES FOR KÙZU DB:
+   - NEVER return a raw node variable like 'RETURN n'. You MUST explicitly return specific properties, e.g., 'RETURN n.name, n.qualified_name'.
+   - Variable-length path queries MUST specify the relationship type explicitly inside directed brackets, e.g., '-[:CALLS*1..3]->'. Never use anonymous path syntax like '-[*1..3]->'.
+   - Use standard 'MATCH' and 'WHERE' clauses; do not use Neo4j-specific functions like 'nodes()' or 'relationships()'.
+   
+   ```
+TASK 3: VERIFY AND ENVIRONMENT SANITY CHECK
+ 1. Ensure all modified files are saved cleanly.
+ 2. Provide a single clear summary listing:
+   * The absolute path the MCP server will target for graph.kz.
+   * The exact files modified.
+ 3. Stop execution immediately and await the command to start the server. DO NOT attempt to run any background indexers, test hooks, or AST parsing optimizations.
+```
+
+***
+
+### Your Next Action Steps
+1. Switch Roo Code to **Orchestrator
+
+```
+
+
+
+
+
+
 Context: The O(N) fallback loops are still triggering because our Fast Path check (hasattr(self.function_registry, '_class_method_index')) is evaluating to False. The dictionary is either attached to the wrong object, or the rebuild_class_method_index() method is never actually being called before Pass 4 runs.
 ​Action 1: Find the Initialization
 Search the codebase for where rebuild_class_method_index() is defined, and where (or if) it is actually being called.
