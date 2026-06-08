@@ -1,3 +1,64 @@
+
+'''
+
+
+import kuzu
+from pathlib import Path
+
+def verify_database():
+    # 1. Target the graph.kz folder in the current directory
+    db_path = Path("graph.kz").resolve()
+    
+    print(f"🔍 Looking for database at: {db_path}")
+    
+    if not db_path.exists():
+        print("❌ ERROR: The graph.kz folder does not exist at this path!")
+        return
+
+    try:
+        # 2. Connect to the database
+        db = kuzu.Database(str(db_path))
+        conn = kuzu.Connection(db)
+        print("✅ Successfully connected to Kùzu database!\n")
+
+        # 3. Check for Indexed Projects (The tool that failed)
+        print("--- 📁 CHECKING PROJECTS ---")
+        try:
+            results = conn.execute("MATCH (p:Project) RETURN p.qualified_name")
+            if results.has_next():
+                while results.has_next():
+                    print(f"Found Project: {results.get_next()}")
+            else:
+                print("⚠️ No 'Project' nodes found in the database.")
+        except Exception as e:
+            print(f"⚠️ Could not query Projects (Schema might be missing): {e}")
+
+        # 4. Count all Node Types
+        print("\n--- 📊 NODE COUNTS ---")
+        results = conn.execute("MATCH (n) RETURN label(n) AS label, count(*) AS count")
+        if results.has_next():
+            while results.has_next():
+                print(results.get_next())
+        else:
+            print("⚠️ Database is completely empty (No nodes).")
+
+        # 5. Count all Relationship Types
+        print("\n--- 🔗 RELATIONSHIP COUNTS ---")
+        results = conn.execute("MATCH ()-[r]->() RETURN label(r) AS label, count(*) AS count")
+        if results.has_next():
+            while results.has_next():
+                print(results.get_next())
+        else:
+            print("⚠️ No relationships found.")
+
+    except Exception as e:
+        print(f"\n❌ FATAL KÙZU ERROR: {e}")
+        print("This usually means the database is locked by another process (like the MCP server running in the background).")
+
+if __name__ == "__main__":
+    verify_database()
+'''
+
 Objective: Migrating all Cypher query-generation tool descriptions inside 'codebase_rag/tools/tool_descriptions.py' to comply with Kùzu DB constraints. 
 
 Context: The tools are defined as multiline Python strings using implicit concatenation across consecutive lines. You must update every tool description that instructs the agent on how to write Cypher queries.
