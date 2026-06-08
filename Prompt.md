@@ -1,3 +1,23 @@
+Objective: Migrating all Cypher query-generation tool descriptions inside 'codebase_rag/tools/tool_descriptions.py' to comply with Kùzu DB constraints. 
+
+Context: The tools are defined as multiline Python strings using implicit concatenation across consecutive lines. You must update every tool description that instructs the agent on how to write Cypher queries.
+
+Action Steps:
+1. Open 'codebase_rag/tools/tool_descriptions.py'.
+2. Review every tool block containing a sample Cypher pattern (e.g., CODEBASE_QUERY, MCP_GET_CODE_SNIPPET, or similar dictionary definitions).
+3. Append the following structural rule block to the end of each description string text. Ensure it uses standard Python implicit concatenation (opening and closing quotes per line seamlessly matching the existing style):
+
+        "\n\nCRITICAL CYPHER SYNTAX RULES FOR KÙZU DB:\n"
+        "- NEVER return a raw node variable like 'RETURN n'. You MUST explicitly return specific properties, e.g., 'RETURN n.name, n.qualified_name'.\n"
+        "- Variable-length path queries MUST specify the relationship type explicitly inside directed brackets, e.g., '-[:CALLS*1..3]->'. Never use anonymous path syntax like '-[*1..3]->'.\n"
+        "- Use standard 'MATCH' and 'WHERE' clauses; do not use Neo4j-specific functions like 'nodes()' or 'relationships()'."
+
+4. Ensure no existing closing parentheses or outer data structure brackets are broken during the text injection.
+5. Save the file and confirm syntax validity by running a dry quick check or validating there are no missing string termination indicators.
+
+
+
+
 Here is a single, comprehensive, highly restrictive system prompt tailored specifically for Roo Code's **Orchestrator Mode**.
 It handles all three tasks synchronously while enforcing strict guardrails to prevent it from wandering back into the parsing or database ingestion logic.
 ### Roo Code Orchestrator Prompt: Demo Preparation Target (4:00 PM)
