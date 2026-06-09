@@ -1,1 +1,162 @@
+---
+name: java-test-generator
+description: |
+  Automates the generation of isolated Maven unit tests for Java 8, 17, and 21. Detects project-specific JDK versions to match JUnit 4/5 patterns. Uses camelCase for test names, AssertJ for fluent assertions, and enforces the 'Test.java' suffix filename layout.
+---
+
+## Objective
+Generate highly isolated, compiling unit tests within a Maven project. Dynamically adjust syntax, annotations, and mocking strategies to match the active JDK version (Java 8, 17, or 21). Exclusively leverage AssertJ for all validation states and strictly enforce correct file naming conventions.
+
+## Prerequisites & Version Detection Rules
+Before writing any test code, scan the workspace configuration:
+1. **Analyze `pom.xml`:** Locate `<java.version>`, `<maven.compiler.source>`, or property tags to identify the Java version ($Java \in \{8, 17, 21\}$).
+2. **Framework Alignment Rule:** 
+   - **If Java 8:** Default to **JUnit 4** lifecycle annotations (`org.junit.*`).
+   - **If Java 17 or 21:** Default to **JUnit 5 / Jupiter** lifecycle annotations (`org.junit.jupiter.api.*`).
+3. **Assertion Engine:** Do not use legacy JUnit asserts. Always import and use AssertJ (`org.assertj.core.api.Assertions.assertThat`).
+
+## Naming, Suffix & Style Rules
+* **File Suffix Rule:** Every generated file MUST follow the naming convention of `[ClassName]Test.java` (e.g., if the target class is `PaymentProcessor`, the test file must be named `PaymentProcessorTest.java`).
+* **Method Names:** Use pure **camelCase** for all test method names. (e.g., `shouldReturnTrueWhenUserIsValid`, `processTransactionThrowsException`). Do not use underscores.
+* **Internal Dependencies:** Scan the source file's imports. Identify and preserve internal corporate domain packages (e.g., `com.company.*`). Do not mock lightweight internal data structures, DTOs, or domain models—instantiate them directly using constructors or builders.
+
+## Version-Specific Testing Strategy Matrix
+
+### Java 8 Framework Profile (JUnit 4 + AssertJ)
+* **Annotations:** Use `@RunWith(MockitoJUnitRunner.class)` at the class level. Use `@Before` for setup, `@Test` for test methods.
+* **Syntax Guardrail:** Avoid local variable type inference (`var`), text blocks (`"""`), and collection factory methods like `List.of()`. Use `Arrays.asList()` or traditional initialization.
+
+### Java 17 Framework Profile (JUnit 5 + AssertJ)
+* **Annotations:** Use `@ExtendWith(MockitoExtension.class)` at the class level. Use `@BeforeEach` for setup, `@Test` for test methods.
+* **Syntax Guardrail:** Use Java 15+ multi-line text blocks (`"""`) for massive mock data string configurations (JSON/XML). Use `var` for local variable declarations to reduce boilerplate.
+
+### Java 21 Framework Profile (JUnit 5 + AssertJ)
+* **Annotations & Syntax:** Mirror Java 17 rules. Safely incorporate advanced pattern matching features or Record patterns if internal corporate domain libraries leverage records.
+
+## Step-by-Step Test Generation Workflow
+
+### 1. Context Collection
+Inspect the target class. Identify its internal business logic dependencies, constructor arguments, and return types. Note any internal company shared libraries imported by the class.
+
+### 2. File Creation
+Determine the proper placement of the test file. Replicate the directory package structure exactly under `src/test/java/` and append the strict **`Test.java`** suffix to your file creation call.
+
+### 3. Isolation Boundaries
+* Mock all external interfaces, database layers, network clients, and heavy processing services using Mockito.
+* For internal domain POJOs, beans, and records, construct real instances with test data rather than mocking them.
+
+### 4. Execution Pattern (AAA)
+* **Arrange:** Set up input values, construct real internal DTOs, and stub mock behaviors.
+* **Act:** Execute the target method under test.
+* **Assert:** Run explicit asserts using AssertJ's fluent API (`assertThat(...)`). For exceptions, use AssertJ's `assertThatThrownBy(...)`.
+
+### 5. Continuous Verification Loop
+* Execute a localized Maven test compilation check immediately after writing the file via the terminal command: `mvn test-compile`.
+* If the compilation fails due to a missing dependency, wrong import, or syntax anomaly, parse the terminal output log, fix the test class directly, and repeat the verification command until it succeeds.
+
+## Structural Blueprints
+
+### Blueprint A: Java 8 Target (JUnit 4 + AssertJ)
+File name constraint example: `AccountProcessingServiceTest.java`
+```java
+package com.company.service;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
+import java.util.Arrays;
+
+import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
+@RunWith(MockitoJUnitRunner.class)
+public class AccountProcessingServiceTest {
+
+    @Mock
+    private InternalAuditClient auditClient;
+
+    @InjectMocks
+    private AccountProcessingService service;
+
+    @Test
+    public void shouldReturnTrueWhenTransactionSucceeds() {
+        // Arrange
+        CompanyUserDto user = new CompanyUserDto(); // Internal corporate library DTO
+        user.setId("USR-100");
+        user.setRoles(Arrays.asList("ADMIN"));
+        
+        when(auditClient.verifyStatus("USR-100")).thenReturn(true);
+
+        // Act
+        boolean result = service.processTransaction(user, 500.0);
+
+        // Assert
+        assertThat(result).isTrue();
+        verify(auditClient, times(1)).verifyStatus("USR-100");
+    }
+}
+```
+
+### Blueprint B: Java 17/21 Target (JUnit 5 + AssertJ)
+File name constraint example: `AccountProcessingServiceTest.java`
+```java
+package com.company.service;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.List;
+
+import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@ExtendWith(MockitoExtension.class)
+class AccountProcessingServiceTest {
+
+    @Mock
+    private InternalAuditClient auditClient;
+
+    @InjectMocks
+    private AccountProcessingService service;
+
+    @Test
+    void shouldReturnTrueWhenPayloadEvaluationPasses() {
+        // Arrange
+        var user = new CompanyUserDto(); 
+        user.setId("USR-100");
+        user.setRoles(List.of("ADMIN"));
+        
+        var structuralPayload = """
+            {
+                "authorization": "GRANTED",
+                "riskScore": 0.02
+            }
+            """;
+        
+        when(auditClient.evaluatePayload("USR-100", structuralPayload)).thenReturn(true);
+
+        // Act
+        boolean result = service.processTransaction(user, structuralPayload);
+
+        // Assert
+        assertThat(result).isTrue();
+        verify(auditClient, times(1)).evaluatePayload("USR-100", structuralPayload);
+    }
+
+    @Test
+    void shouldThrowIllegalArgumentExceptionWhenUserIsNull() {
+        // Act & Assert
+        assertThatThrownBy(() -> service.processTransaction(null, "{}"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("User cannot be null");
+    }
+}
+```
 
