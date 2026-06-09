@@ -1,1 +1,77 @@
 
+---
+name: roo-skill-architect
+description: |
+  Generates a project-specific 'java-test-generator.md' skill file tailored for multi-threaded standalone 'java -jar' headless jobs. Analyzes concurrent data pools, executors, and processing boundaries.
+---
+
+## Objective
+Analyze the current multi-threaded standalone headless Java repository's structural looping patterns, database interaction frameworks, and thread pool managers, then output a highly specialized `.roo/skills/java-test-generator.md` optimized for `qwen-coder-next`.
+
+## Step-by-Step Meta-Workflow
+
+### 1. Multi-Threaded Architecture Ingestion
+Scan the project's `pom.xml`, entry points, and runner services to identify:
+* **Java Compile Target:** Identify if the project targets Java 8, 17, or 21.
+* **Database Interactivity Layer:** Detect how it queries data (e.g., raw JDBC, `JdbcTemplate`, Hibernate session factories, or MyBatis mappers).
+* **Concurrency Mechanisms:** Identify how tasks are dispatched. Look for `ExecutorService`, `ThreadPoolExecutor`, `CompletableFuture`, fork-join pools, or parallel data streams.
+
+### 2. Tailored Instruction Generation
+Generate the instructions for `.roo/skills/java-test-generator.md`, forcing the following parameters for concurrent `java -jar` headless jobs:
+* **Deterministic Async Testing:** Explicitly instruct the model to handle multi-threaded components deterministically. If an `ExecutorService` is injected, inject or mock it to execute tasks synchronously using a direct-handoff model, or use await loops (`CountDownLatch` or `Awaitility` patterns) to avoid flaky assertions.
+* **Thread-Safe Mocking:** Remind the model that Mockito mocks are thread-safe by default, but consecutive stubbing on different threads must be stable.
+* **No Database Side-Effects:** Strictly forbid any connection attempts to real, local, or embedded database engines during the isolated test execution phase.
+
+### 3. Structural Output Execution
+Write the finalized text directly into the project's `.roo/skills/java-test-generator.md` file. The generated file must follow the exact architecture below.
+
+---
+
+## Meta-Output Template
+*When running, write the file below into the project's workspace, replacing all bracketed variables dynamically based on what you find:*
+
+```markdown
+---
+name: java-test-generator
+description: |
+  Automates the generation of isolated Maven unit tests for a multi-threaded standalone Java [INSERT_VERSION] 'java -jar' headless batch processing job. Enforces AssertJ, camelCase naming, and 'Test.java' suffixes.
+---
+
+## Objective
+Generate highly isolated, fast-executing unit tests for multi-threaded batch engines, custom chunk loops, and concurrent data-heavy components. Ensure zero dependence on external database instances.
+
+## Technical Alignment & Frameworks
+* **Java Version:** Java [INSERT_VERSION]
+* **Testing Profile:** [INSERT: "JUnit 4 + Mockito 2/3" for Java 8 OR "JUnit 5 + Mockito 5" for Java 17/21]
+* **Assertions:** AssertJ fluent syntax (`assertThat`) exclusively.
+* **Naming Standards:** Methods in camelCase (no underscores). File naming suffix must be `Test.java`.
+
+## Headless Multi-Threaded Processing Rules
+1. **Executor & Thread Testing Strategy:** If the class uses an `ExecutorService` to execute tasks across threads, ensure tests assert proper task submission. Use Mockito's `ArgumentCaptor` on the executor to capture submitted `Runnable` or `Callable` payloads and run them synchronously in the test thread to maintain full determinism and avoid flakiness.
+2. **Loop & Cursor Boundary Stubbing:** When mocking data fetch loops that supply concurrent queues or worker pools, provide consecutive stubbing responses to verify loop termination states.
+   *(e.g., `when(dao.fetchNextChunk()).thenReturn(validChunk).thenReturn(Collections.emptyList());`)*
+3. **State & Concurrent Metric Assertions:** Assert that custom atomic thread-safe counters (atomic variables, thread-safe accumulators tracking records processed, errors skipped) match expectations across normal runs and partial failures.
+4. **Internal Data Models:** Do not mock database entities or plain POJO data records. Instantiate real test data objects manually using constructors or version-compliant builder patterns.
+
+## Step-by-Step Test Generation Steps
+1. **Analyze File:** Map thread execution horizons, task submission hooks, chunking step boundaries, tracking metrics, and custom error handling blocks.
+2. **Setup AAA Structure:** Use Arrange (setup mocks/entities), Act (execute headless job step method), and Assert (verify metrics, captured task execution logic, and termination states with AssertJ).
+3. **Compile Check Loop:** Run `mvn test-compile` on the workspace. Read the error stream to self-correct any compiler friction, package issues, or incorrect typing.
+
+## Tailored Blueprint
+```java
+[INSERT MULTI-THREADED BLUEPRINT SHOWING TASK CAPTURE OR DETERMINISTIC ASYNC MOCKING MATCHING JUNIT PROFILE]
+```
+\```
+```
+
+***
+
+### Ready to Roll Out
+
+This meta-skill handles your multi-threaded headless apps by preventing `qwen-coder-next` from writing fragile multi-threaded unit tests that fail randomly during builds. Capturing the async worker payloads and running them synchronously keeps tests fast and 100% deterministic.
+
+Advance this setup by trying the following steps:
+* Copy and paste the configuration above into your global `~/.roo/skills/roo-skill-architect.md` file.
+* Open one of your multi-threaded `java -jar` project repositories.
+* Type this initiation prompt to Roo Code: **"Run roo-skill-architect to establish the unit test generator framework for this multi-threaded application."**
