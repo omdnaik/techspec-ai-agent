@@ -2,6 +2,82 @@
 ---
 name: roo-skill-architect
 description: |
+  Generates a project-specific 'java-test-generator.md' skill file tailored for multi-threaded standalone 'java -jar' headless jobs. Enforces a two-step design-then-code architecture fueled by application-specific sample test data.
+---
+
+## Objective
+Analyze the current multi-threaded headless Java repository's patterns, data layers, concurrency engines, and available sample test data files to output a highly specialized `.roo/skills/java-test-generator.md`.
+
+## Step-by-Step Meta-Workflow
+
+### 1. Ingestion Phase
+Scan the active Maven repository to automatically detect:
+* **Java Version Profile:** Look for Java 8, 17, or 21 targets in `pom.xml`.
+* **Concurrency Engine:** Identify `ExecutorService` or custom processing loops.
+* **Sample Test Data Location:** Locate any sample data reference files in the workspace (e.g., json payloads, test entity factories, sql dumps, or markdown data guides under `src/test/resources/`).
+
+### 2. Tailored Instruction Generation
+Generate the instructions for `.roo/skills/java-test-generator.md` and explicitly program the agent to operate using your multi-threaded, two-step structure fueled by the found sample test data properties.
+
+### 3. Structural Output Execution
+Write the finalized text directly into the project's `.roo/skills/java-test-generator.md` file using the template structure below.
+
+---
+
+## Meta-Output Template
+*When running, write the file below into the project's workspace, replacing all bracketed variables dynamically:*
+
+```markdown
+---
+name: java-test-generator
+description: |
+  Automates the generation and implementation of isolated Maven unit tests for a multi-threaded standalone Java [INSERT_VERSION] 'java -jar' headless batch job. Follows a two-step design-then-code architecture using explicit application sample data.
+---
+
+## Objective
+Provide a clean two-step workflow to design and write robust, fast-executing unit tests for multi-threaded batch loops, custom cursors, and concurrent data-heavy components. Ensure 0% dependence on external databases and 100% adherence to application-provided sample test data formats.
+
+## Technical Alignment & Frameworks
+* **Java Version:** Java [INSERT_VERSION]
+* **Testing Profile:** [INSERT: "JUnit 4 + Mockito 2/3" for Java 8 OR "JUnit 5 + Mockito 5" for Java 17/21]
+* **Assertions:** AssertJ fluent syntax (`assertThat`) exclusively.
+* **Naming Standards:** Methods in camelCase (no underscores). File naming suffix must be `Test.java`.
+
+## Strict Sample Data Guardrails
+To prevent flaky tests or validation failures, you must strictly populate all mocks and concrete domain structures using the format rules observed in the project's test data files.
+1. **No Dummy Content:** Never use arbitrary strings like `"foo"`, `"test"`, or generic numeric fields unless verifying validation failures.
+2. **Exact Schema Conformance:** When generating test configurations, mimic the unique string formats, account layouts, state flags, and real-world boundaries found in the project's sample test data.
+
+## Headless Multi-Threaded Processing Rules
+1. **Executor Task Capture:** Use Mockito's `ArgumentCaptor` on the injected thread pool or `ExecutorService` to capture submitted `Runnable` or `Callable` payloads. Run them synchronously in the test thread to maintain 100% determinism.
+2. **Loop Boundary Stubbing:** Use consecutive stubbing responses to verify loop termination states *(e.g., `.thenReturn(validChunk).thenReturn(Collections.emptyList())`)*.
+3. **Internal Data Models:** Do not mock database entities or plain POJO data records. Instantiate real test data objects manually using constructors or version-compliant builder patterns populated with valid data.
+
+## Execution Blueprint: The Two-Step Process
+
+### STEP 1: TEST DESIGN (Generate Test Cases)
+When a file is targeted for test generation, you must FIRST output a structured Markdown test plan inside your chat interface. **Do not create or edit any `.java` files during this step.** 
+
+Your Step 1 plan must outline:
+1. **Target Matrix:** A clean table of test method names (in camelCase), input variations (detailing how the provided sample data formats are mapped), and expected outcomes.
+2. **Boundary Scenarios:** Specific strategies for handling execution loops, mock dropouts, and empty queue responses.
+3. **Concurrency Controls:** How you will capture and synchronously execute the multi-threaded workers.
+
+*Stop immediately after outputting this plan and wait for the user's approval or requested adjustments.*
+
+### STEP 2: IMPLEMENTATION (Code Generation)
+Once the user confirms the plan from Step 1, proceed to implementation:
+1. Create or overwrite the corresponding `[ClassName]Test.java` file inside the appropriate `src/test/java/` directory.
+2. Translate every bullet point from the approved test plan into explicit Java source code using AssertJ, populating all setups with the exact sample data rules specified.
+3. **Continuous Verification:** Run `mvn test-compile` on the workspace. Read the error stream to self-correct any compiler friction, package typos, or typing mismatches automatically before finishing.
+```
+
+
+
+
+---
+name: roo-skill-architect
+description: |
   Generates a project-specific 'java-test-generator.md' skill file tailored for multi-threaded standalone 'java -jar' headless jobs. Analyzes concurrent data pools, executors, and processing boundaries.
 ---
 
