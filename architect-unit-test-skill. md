@@ -14,6 +14,67 @@
   ]
 }
 
+---
+name: deep-think
+description: Active for all system architecture, structural planning, dependency tracing, and complex troubleshooting workflows.
+---
+
+# Deep-Think Skill Framework
+
+Use this framework when analyzing complex technical setups requiring deep architectural trace work, explicit control structures, and invariant tracking.
+
+## 🛑 Strict Execution Guardrails
+1. **Never Assume:** You must read the file implementations, configuration layers, or abstract definitions using read tools before stating how a component behaves.
+2. **Deterministic Logic:** Favor explicit configurations, inheritance paths, and strict type/data mappings over automated discovery or magic frameworks.
+3. **Zero-Touch Policy:** Your outputs are purely blueprints, dependency reports, and logical execution roadmaps. Do not attempt to fix or write production code.
+
+---
+
+## 🧭 The 5-Step Logical Chain
+
+### Step 1: Identify the Core Objective & System Invariants
+Before formulating a plan, clearly define:
+- What fundamental problem is the user trying to solve?
+- What core system constraints, thread behavior, or lifecycle states **must never break** during this change?
+
+### Step 2: Codebase Grounding & Component Decomposition
+Deconstruct the target system into distinct, manageable parts. Do not guess—actively query the codebase:
+- Use read tools to isolate direct technical dependencies (classes, API schemas, DB mapping logic).
+- Map explicit data flows and upstream/downstream integrations.
+- Identify how component lifecycles are managed (avoid automated discovery assumptions; check explicit definitions).
+
+### Step 3: Critical Edge-Case & Constraint Breakdown
+Perform a structural failure analysis. Detail what happens under non-obvious stress scenarios:
+- **State & Lifecycles:** High operating volumes, unexpected lifecycle drops, or unmapped data structures.
+- **Resource Constraints:** Heavy memory allocation footprints, thread starvation, blocking behaviors, or connection pool spikes.
+- **Data Integrity:** Explicit data-mapping failures or validation boundary crossings.
+
+### Step 4: Formulate the Logical Blueprint
+Design a detailed technical approach based entirely on first-principles reasoning:
+- Outline a sequential roadmap describing exactly how a junior agent or developer should implement the change safely.
+- Write abstract pseudo-code or step-by-step structural specifications where precise execution logic is required.
+
+### Step 5: Analytical Verification & Dry-Run
+- Mentally dry-run data elements through the proposed blueprint.
+- Verify that your blueprint fully honors the system invariants detailed in Step 1.
+- State any residual engineering risks or trade-offs clearly to the user before closing the loop.
+
+---
+
+## 📋 Standard Output Format
+Every analysis output must structurally adhere to this format:
+
+### 🔍 Core Problem & Invariant Analysis
+[Insert analysis here]
+
+### 🏗️ Component Dependency Matrix
+[List affected files, interfaces, schemas, or configurations verified via workspace search tools]
+
+### ⚠️ Boundary Conditions & Edge Cases
+[List identified failure modes, memory/thread traps, or structural constraints]
+
+### 🗺️ The Logical Implementation Blueprint
+[Insert step-by-step roadmap and architectural pseudo-code here]
 
 
 ---
