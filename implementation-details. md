@@ -1642,4 +1642,2109 @@ Volume 3 is complete when:
 
 ✓ Retention policies implemented
 
+Implementation Specification - Volume 4
+
+AWX / Ansible Tower Design
+
+Version: 1.0
+
+Status: Approved Baseline
+
+---
+
+1. Purpose
+
+This document defines:
+
+- AWX Organization Structure
+- Inventories
+- Credentials
+- Job Templates
+- Workflow Templates
+- Surveys
+- Runtime Host Injection
+- Notification Integration
+- RBAC Model
+
+This specification shall be treated as the source of truth for AWX implementation.
+
+---
+
+2. AWX Architecture
+
+The framework shall use AWX for:
+
+Workflow Orchestration
+Job Execution
+Credential Management
+Notifications
+Execution History
+Artifact Publication
+
+AWX shall NOT be used for:
+
+Configuration Storage
+Checkpoint Storage
+Report Storage
+Manifest Storage
+
+These remain in source control or runtime filesystem.
+
+---
+
+3. AWX Organization Structure
+
+Recommended:
+
+Organization
+
+└── Regression Automation
+
+All framework artifacts belong to this organization.
+
+---
+
+4. AWX Project Structure
+
+Project Name:
+
+Regression Automation Framework
+
+Repository:
+
+regression-automation-framework
+
+Update Strategy:
+
+Update Revision On Launch = Enabled
+
+---
+
+5. Inventory Strategy
+
+IMPORTANT
+
+Static inventories shall NOT contain runtime execution hosts.
+
+Reason:
+
+Host selected at runtime
+
+Inventory should contain only framework execution metadata.
+
+Example:
+
+Framework Inventory
+
+└── localhost
+
+---
+
+6. Runtime Host Injection Strategy
+
+Host supplied by survey:
+
+Example:
+
+targetHost=qa-host01
+
+Workflow performs:
+
+add_host:
+  name: "{{ targetHost }}"
+  groups: runtime_execution
+
+Subsequent plays execute against:
+
+runtime_execution
+
+No permanent inventory updates allowed.
+
+---
+
+7. AWX Credentials
+
+Required Credentials:
+
+Machine Credential
+Artifactory Credential
+SMTP Credential (optional)
+Vault Credential (future)
+
+---
+
+8. Machine Credential
+
+Purpose:
+
+SSH access to runtime host
+
+Fields:
+
+Username
+SSH Private Key
+Privilege Escalation Password (optional)
+
+---
+
+9. Artifactory Credential
+
+Purpose:
+
+Artifact download authentication
+
+Fields:
+
+Username
+Password
+Token
+
+Must be injected as environment variables.
+
+---
+
+10. Credential Rules
+
+Credentials SHALL:
+
+Never be stored in Git
+
+Never be stored in group_vars
+
+Never be stored in manifests
+
+Never be written to reports
+
+---
+
+11. Survey Architecture
+
+All executions shall be launched through surveys.
+
+---
+
+12. Survey Fields
+
+Required Fields:
+
+Environment
+Target Host
+Manifest Path
+Execution Mode
+
+---
+
+13. Environment Survey Field
+
+Type:
+
+Multiple Choice
+
+Allowed Values:
+
+DEV
+QA
+UAT
+PROD
+
+Required:
+
+YES
+
+---
+
+14. Target Host Survey Field
+
+Type:
+
+Text
+
+Example:
+
+qa-regression-host01
+
+Required:
+
+YES
+
+---
+
+15. Manifest Path Survey Field
+
+Type:
+
+Text
+
+Example:
+
+manifests/run_001.json
+
+Required:
+
+YES
+
+---
+
+16. Execution Mode Survey Field
+
+Allowed Values:
+
+PARALLEL
+SEQUENTIAL
+RESUME
+
+Required:
+
+YES
+
+---
+
+17. AWX Job Templates
+
+Required Templates:
+
+JT-001 Validate Manifest
+
+JT-002 Validate Runtime Host
+
+JT-003 Execute Parallel
+
+JT-004 Execute Sequential
+
+JT-005 Resume Execution
+
+JT-006 Generate Reports
+
+JT-007 Notify
+
+---
+
+18. JT-001 Validate Manifest
+
+Playbook:
+
+playbooks/validate_manifest.yml
+
+Inputs:
+
+environment
+manifest_path
+
+Outputs:
+
+validated_manifest
+
+Failure:
+
+Stop workflow
+
+---
+
+19. JT-002 Validate Runtime Host
+
+Playbook:
+
+playbooks/validate_runtime_host.yml
+
+Inputs:
+
+targetHost
+environment
+
+Outputs:
+
+validated_host
+
+Failure:
+
+Stop workflow
+
+---
+
+20. JT-003 Execute Parallel
+
+Playbook:
+
+playbooks/execute_parallel.yml
+
+Execution:
+
+Multiple artifact pipelines
+
+Input:
+
+validated_manifest
+validated_host
+
+---
+
+21. JT-004 Execute Sequential
+
+Playbook:
+
+playbooks/execute_sequential.yml
+
+Execution:
+
+Ordered artifact execution
+
+---
+
+22. JT-005 Resume Execution
+
+Playbook:
+
+playbooks/resume_execution.yml
+
+Execution:
+
+Checkpoint-based restart
+
+---
+
+23. JT-006 Generate Reports
+
+Playbook:
+
+playbooks/generate_reports.yml
+
+Responsibilities:
+
+Aggregate reports
+Generate summary
+Publish artifacts
+
+---
+
+24. JT-007 Notify
+
+Playbook:
+
+playbooks/notify.yml
+
+Responsibilities:
+
+Failure notifications
+Completion notifications
+Summary notifications
+
+---
+
+25. Workflow Templates
+
+Required Workflows:
+
+WF-001 Parallel Execution
+
+WF-002 Sequential Execution
+
+WF-003 Resume Execution
+
+---
+
+26. WF-001 Parallel Execution
+
+Graph:
+
+Validate Manifest
+        |
+Validate Runtime Host
+        |
+Execute Parallel
+        |
+Generate Reports
+        |
+Notify
+
+Failure Handling:
+
+Manifest Failure
+Host Validation Failure
+
+=> Stop Workflow
+
+Execution Failure:
+
+Continue to Reporting
+Continue to Notification
+
+---
+
+27. WF-002 Sequential Execution
+
+Graph:
+
+Validate Manifest
+        |
+Validate Runtime Host
+        |
+Execute Sequential
+        |
+Generate Reports
+        |
+Notify
+
+---
+
+28. WF-003 Resume Workflow
+
+Graph:
+
+Validate Manifest
+        |
+Validate Runtime Host
+        |
+Resume Execution
+        |
+Generate Reports
+        |
+Notify
+
+---
+
+29. Parallel Execution Design
+
+Parallelism shall occur inside:
+
+JT-003 Execute Parallel
+
+NOT inside AWX workflow branches.
+
+Reason:
+
+Need consolidated checkpointing.
+
+Need consolidated reporting.
+
+Need consolidated host governance.
+
+Need centralized failure handling.
+
+---
+
+30. Parallel Worker Model
+
+Execution Engine receives:
+
+{
+  "artifacts": [...]
+}
+
+Framework creates:
+
+Worker 1
+Worker 2
+Worker 3
+Worker 4
+Worker 5
+
+Maximum:
+
+max_parallel_artifacts: 5
+
+---
+
+31. AWX Artifacts
+
+Generated Reports:
+
+execution_summary.json
+
+artifact_result.json
+
+validation_result.json
+
+Published as AWX Job Artifacts.
+
+---
+
+32. Workflow Variables
+
+Required Variables:
+
+environment:
+targetHost:
+manifest_path:
+execution_mode:
+run_id:
+
+---
+
+33. Variable Passing Rules
+
+Workflow Nodes SHALL pass:
+
+environment
+targetHost
+manifest_path
+run_id
+
+to downstream nodes.
+
+No node should independently resolve runtime values.
+
+---
+
+34. Notification Integration
+
+Notification Source:
+
+AWX Native Notifications
+
+Supported:
+
+Email
+Slack (future)
+Webhook (future)
+
+---
+
+35. Notification Triggers
+
+Workflow Success:
+
+Completion Notification
+
+Workflow Failure:
+
+Failure Notification
+
+Artifact Failure:
+
+Summary Notification
+
+after report generation.
+
+---
+
+36. RBAC Model
+
+Roles:
+
+Framework Admin
+
+Framework Operator
+
+Framework Viewer
+
+---
+
+37. Framework Admin
+
+Permissions:
+
+Manage Projects
+Manage Inventories
+Manage Credentials
+Manage Workflows
+Manage Templates
+
+---
+
+38. Framework Operator
+
+Permissions:
+
+Launch Workflows
+View Reports
+View Job Output
+
+Cannot:
+
+Modify Credentials
+Modify Workflows
+
+---
+
+39. Framework Viewer
+
+Permissions:
+
+View Jobs
+View Reports
+View Notifications
+
+Read-only access.
+
+---
+
+40. Logging Requirements
+
+Every Job Template shall log:
+
+Run ID
+
+Environment
+
+Execution Mode
+
+Target Host
+
+Start Time
+
+End Time
+
+---
+
+41. Audit Requirements
+
+AWX Job History shall provide:
+
+Who launched execution
+
+When execution started
+
+Manifest used
+
+Host used
+
+Execution result
+
+---
+
+42. Operational Rules
+
+Do NOT:
+
+Store manifests in AWX variables
+
+Store credentials in surveys
+
+Store checkpoint data in AWX
+
+Store report content in AWX variables
+
+AWX remains orchestration layer only.
+
+---
+
+43. Disaster Recovery Rules
+
+If AWX unavailable:
+
+No execution allowed
+
+If runtime host unavailable:
+
+Execution rejected
+
+If Artifactory unavailable:
+
+Deployment failure
+
+---
+
+44. Definition of Done
+
+Volume 4 is complete when:
+
+✓ AWX Organization created
+
+✓ Project configured
+
+✓ Credentials configured
+
+✓ Survey configured
+
+✓ Job Templates created
+
+✓ Workflow Templates created
+
+✓ Runtime host injection implemented
+
+✓ Report publication implemented
+
+✓ Notifications configured
+
+✓ RBAC configured
+
+Implementation Specification - Volume 5
+
+Agentic Coding Standards & Generation Rules
+
+Version: 1.0
+
+Status: Approved Baseline
+
+Purpose: This document defines mandatory coding standards, repository generation rules, implementation constraints, testing requirements, and AI agent instructions for generating the Regression Automation Framework.
+
+This document is intended for:
+
+- Roo Code
+- Codex
+- Cursor
+- Claude Code
+- GPT-based implementation agents
+
+---
+
+1. Agent Execution Strategy
+
+The implementation shall be generated incrementally.
+
+DO NOT generate the entire framework in a single prompt.
+
+Generation order:
+
+Phase 1
+Repository Structure
+
+Phase 2
+Configuration Framework
+
+Phase 3
+Manifest Framework
+
+Phase 4
+Execution Framework
+
+Phase 5
+Reporting Framework
+
+Phase 6
+Checkpoint Framework
+
+Phase 7
+Resume Framework
+
+Phase 8
+AWX Integration
+
+Phase 9
+Testing
+
+Phase 10
+Documentation
+
+---
+
+2. Repository Generation Rules
+
+Agent SHALL generate:
+
+Directory Structure
+
+Role Skeletons
+
+Playbook Skeletons
+
+Schema Definitions
+
+README Files
+
+before generating implementation logic.
+
+Implementation generation is prohibited until repository skeleton is reviewed.
+
+---
+
+3. Coding Principles
+
+Framework shall be:
+
+Configuration Driven
+
+Reusable
+
+Modular
+
+Idempotent
+
+Observable
+
+Recoverable
+
+---
+
+4. Ansible Design Rules
+
+Business logic belongs in:
+
+Roles
+
+NOT in:
+
+Playbooks
+
+Playbooks shall only orchestrate roles.
+
+---
+
+5. Role Design Rules
+
+Each role shall:
+
+Have single responsibility
+
+Expose structured outputs
+
+Handle errors consistently
+
+Produce logs
+
+Be independently testable
+
+---
+
+6. Role Directory Standard
+
+Every role must contain:
+
+role_name/
+
+├── defaults/
+│   └── main.yml
+
+├── vars/
+│   └── main.yml
+
+├── tasks/
+│   └── main.yml
+
+├── handlers/
+│   └── main.yml
+
+├── templates/
+
+└── README.md
+
+---
+
+7. Variable Naming Rules
+
+Allowed:
+
+artifact_timeout_minutes
+
+report_root
+
+checkpoint_root
+
+Not Allowed:
+
+artifactTimeoutMinutes
+
+ReportRoot
+
+checkpointRoot
+
+Rule:
+
+snake_case only
+
+---
+
+8. File Naming Rules
+
+Playbooks:
+
+execute_parallel.yml
+
+resume_execution.yml
+
+Roles:
+
+manifest_validation
+
+runtime_host_validation
+
+Files:
+
+artifact_result.json
+
+validation_result.json
+
+---
+
+9. Path Construction Rules
+
+Hardcoded paths prohibited.
+
+Example:
+
+BAD
+
+/apps/regression/reports
+
+GOOD
+
+{{ report_root }}
+
+---
+
+10. Configuration Rules
+
+Allowed Sources:
+
+group_vars
+
+manifest
+
+AWX credential injection
+
+Prohibited Sources:
+
+Hardcoded values
+
+Environment-specific logic inside roles
+
+---
+
+11. Logging Standards
+
+Every role must log:
+
+START
+
+END
+
+FAILURE
+
+Format:
+
+[TIMESTAMP]
+[RUN_ID]
+[ARTIFACT]
+[ROLE]
+[MESSAGE]
+
+Example:
+
+2025-05-18T10:00:00Z
+RUN_001
+payment-service
+deploy
+Deployment started
+
+---
+
+12. Error Handling Rules
+
+Every failure must:
+
+Capture error
+
+Classify failure
+
+Generate failure record
+
+Update checkpoint
+
+Return structured result
+
+---
+
+13. Failure Types
+
+Only these failure types are permitted:
+
+CONFIGURATION_FAILURE
+
+MANIFEST_FAILURE
+
+HOST_VALIDATION_FAILURE
+
+DOWNLOAD_FAILURE
+
+DEPLOYMENT_FAILURE
+
+SANITY_FAILURE
+
+EXECUTION_FAILURE
+
+VALIDATION_FAILURE
+
+TIMEOUT_FAILURE
+
+---
+
+14. Exception Handling Rules
+
+Tasks shall:
+
+Fail fast
+
+Capture root cause
+
+Avoid silent failures
+
+Avoid:
+
+ignore_errors: true
+
+unless explicitly justified.
+
+---
+
+15. JSON Generation Rules
+
+All JSON must be:
+
+Pretty Printed
+
+UTF-8
+
+Valid JSON
+
+---
+
+16. Timestamp Rules
+
+All timestamps:
+
+UTC
+
+ISO-8601
+
+Example:
+
+2025-05-18T10:15:00Z
+
+---
+
+17. Parallel Execution Rules
+
+Maximum workers:
+
+max_parallel_artifacts: 5
+
+Worker count must be configurable.
+
+No hardcoded worker limits.
+
+---
+
+18. Parallel Safety Rules
+
+Artifacts shall never share:
+
+Workspace
+
+Report Directory
+
+Checkpoint Directory
+
+Every artifact owns dedicated resources.
+
+---
+
+19. Checkpoint Rules
+
+Checkpoint updates shall be:
+
+Atomic
+
+Idempotent
+
+Partial checkpoint writes prohibited.
+
+---
+
+20. Resume Rules
+
+Resume implementation shall:
+
+Skip COMPLETED
+
+Skip SKIPPED
+
+Restart FAILED
+
+Restart TIMEOUT
+
+No phase-level resume allowed.
+
+---
+
+21. Manifest Processing Rules
+
+Manifest validation occurs before:
+
+Host Validation
+
+Execution
+
+Deployment
+
+No execution allowed for invalid manifests.
+
+---
+
+22. Report Generation Rules
+
+Each artifact generates:
+
+artifact_result.json
+
+validation_result.json
+
+Execution summary generated once.
+
+---
+
+23. Report Aggregation Rules
+
+Reporting engine must:
+
+Read all artifact reports
+
+Calculate totals
+
+Generate execution summary
+
+Reporting must not depend on AWX APIs.
+
+---
+
+24. Notification Rules
+
+Notifications consume:
+
+execution_summary.json
+
+Notifications do not inspect artifact directories directly.
+
+---
+
+25. AWX Integration Rules
+
+AWX responsibilities:
+
+Launch
+
+Orchestrate
+
+Store Credentials
+
+Publish Artifacts
+
+Send Notifications
+
+AWX must not:
+
+Store Checkpoints
+
+Store Reports
+
+Store Configuration
+
+---
+
+26. Dependency Rules
+
+Allowed:
+
+Ansible Core
+
+Python Standard Library
+
+Avoid introducing:
+
+Pandas
+
+Heavy Frameworks
+
+Database Dependencies
+
+without explicit approval.
+
+---
+
+27. Python Utility Rules
+
+Python utilities shall:
+
+Have single responsibility
+
+Be executable independently
+
+Support command-line invocation
+
+Example:
+
+generate_summary.py
+
+checkpoint_manager.py
+
+---
+
+28. Testing Strategy
+
+Testing shall be generated alongside implementation.
+
+---
+
+29. Unit Test Rules
+
+Each Python utility shall have:
+
+Positive Test
+
+Negative Test
+
+Edge Case Test
+
+---
+
+30. Ansible Role Testing
+
+Each role shall validate:
+
+Success Path
+
+Failure Path
+
+Invalid Input Path
+
+---
+
+31. Integration Test Requirements
+
+Mandatory scenarios:
+
+Sequential Execution
+
+Parallel Execution
+
+Validation Failure
+
+Deployment Failure
+
+Execution Failure
+
+Timeout Failure
+
+Resume Execution
+
+---
+
+32. Mocking Rules
+
+External systems shall be mockable.
+
+Examples:
+
+Artifactory
+
+SMTP
+
+Runtime Hosts
+
+---
+
+33. Documentation Rules
+
+Every role shall include:
+
+Purpose
+
+Inputs
+
+Outputs
+
+Failure Conditions
+
+Examples
+
+README required.
+
+---
+
+34. Agent Restrictions
+
+Agent SHALL NOT:
+
+Invent APIs
+
+Invent Configuration Fields
+
+Invent Status Values
+
+Invent Failure Types
+
+All implementations must conform to Volumes 1–4.
+
+---
+
+35. Code Review Checklist
+
+Before marking implementation complete verify:
+
+No hardcoded paths
+
+No hardcoded credentials
+
+Role contracts implemented
+
+JSON contracts implemented
+
+Checkpoint contracts implemented
+
+Logging implemented
+
+Failure classification implemented
+
+Tests implemented
+
+---
+
+36. Agent Deliverables Per Story
+
+For each Jira story the agent must generate:
+
+Implementation
+
+Unit Tests
+
+README Updates
+
+Example Configuration
+
+Example Execution Output
+
+---
+
+37. Story Completion Criteria
+
+A story is complete only when:
+
+Code Generated
+
+Tests Generated
+
+Tests Passing
+
+Documentation Updated
+
+---
+
+38. Quality Gates
+
+All generated code must satisfy:
+
+No TODO placeholders
+
+No mocked production logic
+
+No unimplemented functions
+
+No dead code
+
+---
+
+39. Generation Workflow for Roo/Codex
+
+Recommended prompt sequence:
+
+Step 1
+Generate repository skeleton
+
+Step 2
+Generate configuration framework
+
+Step 3
+Generate manifest framework
+
+Step 4
+Generate execution framework
+
+Step 5
+Generate reporting framework
+
+Step 6
+Generate checkpoint framework
+
+Step 7
+Generate resume framework
+
+Step 8
+Generate AWX integration
+
+Step 9
+Generate tests
+
+Step 10
+Generate documentation
+
+---
+
+40. Definition of Done
+
+Volume 5 is complete when:
+
+✓ Coding standards defined
+
+✓ Error handling standards defined
+
+✓ Testing standards defined
+
+✓ Agent restrictions defined
+
+✓ Review checklist defined
+
+✓ Story completion criteria defined
+
+✓ Generation workflow defined
+
+This document shall be supplied together with Volumes 1–4 for all agentic code generation activities.
+
+Implementation Specification - Volume 6
+
+Jira to Implementation Mapping
+
+Version: 1.0
+
+Status: Approved Baseline
+
+Purpose: Provide deterministic implementation guidance for AI coding agents by mapping each Jira story to impacted repository components, roles, playbooks, schemas, tests, and deliverables.
+
+---
+
+1. Mapping Rules
+
+For every Jira:
+
+Agent SHALL identify:
+
+Roles Created
+Roles Modified
+Playbooks Modified
+Schemas Modified
+AWX Components Modified
+Tests Required
+Documentation Required
+
+Agent SHALL NOT modify unrelated components.
+
+---
+
+2. US-001 Repository Structure
+
+Objective:
+
+Create baseline repository structure.
+
+Components:
+
+Repository Root
+
+playbooks/
+roles/
+group_vars/
+schemas/
+manifests/
+templates/
+scripts/
+tests/
+docs/
+reports/
+
+Files Created:
+
+README.md
+
+Tests:
+
+Repository structure validation
+
+---
+
+3. US-002 Environment Configuration Framework
+
+Roles:
+
+None
+
+Files:
+
+group_vars/all.yml
+group_vars/platform.yml
+group_vars/dev.yml
+group_vars/qa.yml
+group_vars/uat.yml
+group_vars/prod.yml
+
+Tests:
+
+Environment variable resolution
+Override resolution
+
+---
+
+4. US-003 Execution Environment Validation
+
+Artifacts:
+
+Execution Environment Checklist
+Dependency Validation Script
+
+Scripts:
+
+scripts/validate_execution_environment.py
+
+Tests:
+
+Dependency detection
+
+---
+
+5. US-004 Credential Framework
+
+AWX Components:
+
+Machine Credential
+Artifactory Credential
+
+Documentation:
+
+Credential Setup Guide
+
+Tests:
+
+Credential injection validation
+
+---
+
+6. US-005 Manifest Schema
+
+Files:
+
+schemas/execution_manifest.schema.json
+
+Tests:
+
+Valid manifest
+Missing field
+Invalid enum
+
+---
+
+7. US-006 Manifest Validation Role
+
+Roles:
+
+roles/manifest_validation
+
+Playbooks:
+
+validate_manifest.yml
+
+Tests:
+
+Schema validation
+Failure scenarios
+
+---
+
+8. US-007 Manifest Validation Playbook
+
+Playbooks:
+
+playbooks/validate_manifest.yml
+
+Roles Used:
+
+manifest_validation
+
+---
+
+9. US-002A Runtime Host Validation
+
+Roles:
+
+runtime_host_validation
+
+Playbooks:
+
+validate_runtime_host.yml
+
+Tests:
+
+reachable host
+invalid host
+dns failure
+
+---
+
+10. US-040 Runtime User Validation
+
+Roles:
+
+runtime_user_validation
+
+Tests:
+
+authorized user
+unauthorized user
+
+---
+
+11. US-013 Artifact Metadata Framework
+
+Files:
+
+schemas/artifact_definition.schema.json
+
+Documentation:
+
+Artifact Onboarding Guide
+
+Tests:
+
+schema validation
+
+---
+
+12. US-021 Artifact Download Component
+
+Roles:
+
+artifact_download
+
+Tests:
+
+download success
+authentication failure
+missing artifact
+
+---
+
+13. US-014 Cleanup Role
+
+Roles:
+
+cleanup
+
+Tests:
+
+workspace cleanup
+preserve checkpoints
+
+---
+
+14. US-015 Precheck Role
+
+Roles:
+
+precheck
+
+Tests:
+
+disk space validation
+runtime validation
+
+---
+
+15. US-016 Sanity Role
+
+Roles:
+
+sanity
+
+Tests:
+
+deployment verification
+
+---
+
+16. US-017 Housekeeping Role
+
+Roles:
+
+housekeeping
+
+Tests:
+
+archive generation
+cleanup verification
+
+---
+
+17. US-020 Deployment Role
+
+Roles:
+
+deploy
+
+Tests:
+
+deployment success
+deployment failure
+
+---
+
+18. US-018 Validation Role
+
+Roles:
+
+validate
+
+Schemas:
+
+validation_result.json
+
+Tests:
+
+validation pass
+validation fail
+
+---
+
+19. US-023 Parallel Execution Engine
+
+Roles:
+
+execution_engine
+
+Scripts:
+
+scripts/execution_engine/
+
+Playbooks:
+
+execute_parallel.yml
+
+Tests:
+
+1 artifact
+5 artifacts
+worker exhaustion
+
+---
+
+20. US-024 Timeout Framework
+
+Roles:
+
+execution_engine
+
+Scripts:
+
+timeout_supervisor.py
+
+Tests:
+
+timeout
+process kill
+
+---
+
+21. US-025 Execution Engine Integration
+
+Roles:
+
+execution_engine
+cleanup
+precheck
+deploy
+sanity
+execute
+validate
+housekeeping
+
+Tests:
+
+full lifecycle
+
+---
+
+22. US-019 Artifact Pipeline
+
+Playbooks:
+
+execute_parallel.yml
+execute_sequential.yml
+
+Roles:
+
+all lifecycle roles
+
+Tests:
+
+end-to-end pipeline
+
+---
+
+23. US-026 Reporting Framework
+
+Roles:
+
+reporting
+
+Files:
+
+artifact_result.json
+execution_summary.json
+validation_result.json
+
+Tests:
+
+report generation
+
+---
+
+24. US-027 Report Aggregation
+
+Scripts:
+
+generate_summary.py
+
+Roles:
+
+reporting
+
+Tests:
+
+summary aggregation
+
+---
+
+25. US-028A Publish Reports
+
+Playbooks:
+
+generate_reports.yml
+
+AWX:
+
+artifact publication
+
+Tests:
+
+artifact visibility
+
+---
+
+26. US-034 Job Templates
+
+AWX:
+
+JT-001
+JT-002
+JT-003
+JT-004
+JT-005
+JT-006
+JT-007
+
+Tests:
+
+job launch validation
+
+---
+
+27. US-036 Parallel Workflow
+
+AWX:
+
+WF-001
+
+Tests:
+
+workflow execution
+
+---
+
+28. US-029 Notifications
+
+Roles:
+
+notification
+
+Tests:
+
+notification payload
+
+---
+
+29. US-030 Failure Notifications
+
+Files:
+
+failure_notification.json
+
+Tests:
+
+failure trigger
+
+---
+
+30. US-032 Summary Notifications
+
+Files:
+
+summary_notification.json
+
+Tests:
+
+summary generation
+
+---
+
+31. US-022 Sequential Execution
+
+Playbooks:
+
+execute_sequential.yml
+
+Roles:
+
+execution_engine
+
+Tests:
+
+ordered execution
+
+---
+
+32. US-035 Sequential Workflow
+
+AWX:
+
+WF-002
+
+Tests:
+
+workflow validation
+
+---
+
+33. US-009 Checkpoint Contract
+
+Files:
+
+run.properties
+marker contracts
+
+Schemas:
+
+checkpoint contract
+
+Tests:
+
+checkpoint generation
+
+---
+
+34. US-010 Checkpoint Manager
+
+Roles:
+
+checkpoint
+
+Scripts:
+
+checkpoint_manager.py
+
+Tests:
+
+checkpoint updates
+
+---
+
+35. US-011 Checkpoint Resolver
+
+Roles:
+
+resume
+
+Scripts:
+
+checkpoint_resolver.py
+
+Tests:
+
+artifact resolution
+
+---
+
+36. US-012 Resume Dispatcher
+
+Roles:
+
+resume
+
+Scripts:
+
+resume_dispatcher.py
+
+Tests:
+
+resume execution
+
+---
+
+37. US-037 Resume Workflow
+
+AWX:
+
+WF-003
+
+Playbooks:
+
+resume_execution.yml
+
+Tests:
+
+resume workflow
+
+---
+
+38. Cross-Cutting Integration Tests
+
+Required End-to-End Tests
+
+Parallel Success
+
+Parallel Failure
+
+Parallel Timeout
+
+Sequential Success
+
+Sequential Failure
+
+Resume From Failure
+
+Resume From Timeout
+
+Manifest Validation Failure
+
+Host Validation Failure
+
+---
+
+39. Agent Story Workflow
+
+For every Jira:
+
+1. Read impacted components
+
+2. Generate code
+
+3. Generate tests
+
+4. Update README
+
+5. Execute tests
+
+6. Produce implementation summary
+
+---
+
+40. Definition of Done
+
+A Jira implementation is complete only when:
+
+✓ Code generated
+
+✓ Unit tests generated
+
+✓ Integration tests generated
+
+✓ Documentation updated
+
+✓ Story acceptance criteria satisfied
+
+✓ No contract violations against Volumes 1–5
 
