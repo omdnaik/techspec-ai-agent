@@ -1,4 +1,3 @@
-Yes. For Codex/Roo, use the following as the Technical Specification Addendum and append it to the Technical Specification document that was generated earlier.
 
 
 ---
