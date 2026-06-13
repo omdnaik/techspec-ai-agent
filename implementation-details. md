@@ -1,1 +1,1645 @@
 
+Implementation Specification - Volume 1
+
+Repository & Configuration Architecture
+
+Version: 1.0
+
+Status: Approved Baseline
+
+---
+
+1. Purpose
+
+This document defines the repository structure, configuration hierarchy, directory contracts, naming standards, variable contracts, and manifest contracts for the Regression Automation Framework.
+
+All implementation artifacts shall conform to this specification.
+
+---
+
+2. Repository Structure
+
+The repository shall be organized as follows:
+
+regression-automation-framework/
+
+├── playbooks/
+│
+├── roles/
+│
+├── group_vars/
+│
+├── manifests/
+│
+├── schemas/
+│
+├── scripts/
+│
+├── templates/
+│
+├── reports/
+│
+├── docs/
+│
+├── tests/
+│
+└── README.md
+
+---
+
+3. Playbook Structure
+
+playbooks/
+
+├── validate_manifest.yml
+├── validate_runtime_host.yml
+├── execute_parallel.yml
+├── execute_sequential.yml
+├── resume_execution.yml
+├── generate_reports.yml
+└── notify.yml
+
+Rules:
+
+- One business capability per playbook
+- Playbooks orchestrate roles
+- Business logic shall not reside in playbooks
+- Playbooks only coordinate execution
+
+---
+
+4. Role Structure
+
+roles/
+
+├── manifest_validation/
+├── runtime_host_validation/
+├── runtime_user_validation/
+├── artifact_download/
+├── cleanup/
+├── precheck/
+├── deploy/
+├── sanity/
+├── execute/
+├── validate/
+├── reporting/
+├── notification/
+├── checkpoint/
+└── resume/
+
+Every role shall contain:
+
+role_name/
+
+├── defaults/
+│   └── main.yml
+│
+├── tasks/
+│   └── main.yml
+│
+├── handlers/
+│   └── main.yml
+│
+├── vars/
+│   └── main.yml
+│
+├── templates/
+│
+└── README.md
+
+---
+
+5. Environment Configuration Hierarchy
+
+Configuration shall be resolved in the following order:
+
+all.yml
+    ↓
+platform.yml
+    ↓
+environment.yml
+    ↓
+manifest values
+
+Later values override earlier values.
+
+---
+
+6. Configuration Files
+
+group_vars/
+
+├── all.yml
+├── platform.yml
+├── dev.yml
+├── qa.yml
+├── uat.yml
+└── prod.yml
+
+---
+
+7. all.yml Contract
+
+Contains framework defaults.
+
+Example:
+
+max_parallel_artifacts: 5
+
+max_parallel_jobs_per_artifact: 2
+
+default_artifact_timeout_minutes: 120
+
+report_retention_days: 30
+
+checkpoint_retention_days: 15
+
+artifact_download_retry_count: 3
+
+artifact_download_retry_delay_seconds: 30
+
+notify_on_failure: true
+
+notify_on_completion: true
+
+Rules:
+
+- No environment-specific values
+- No credentials
+- No host names
+
+---
+
+8. platform.yml Contract
+
+Contains organization-wide values.
+
+Example:
+
+artifactory_base_url: https://artifactory.company.com
+
+smtp_host: smtp.company.com
+
+smtp_port: 25
+
+workspace_root: /apps/regression/workspace
+
+report_root: /apps/regression/reports
+
+checkpoint_root: /apps/regression/checkpoints
+
+log_root: /apps/regression/logs
+
+Rules:
+
+- Shared across all environments
+- No environment-specific values
+
+---
+
+9. Environment Configuration Contract
+
+Example: qa.yml
+
+environment_name: QA
+
+artifactory_repo: regression-qa
+
+allowed_runtime_users:
+  - svc_regression
+  - qa_user
+
+notification_recipients:
+  - qa-team@company.com
+
+max_concurrent_runs: 2
+
+artifact_timeout_minutes: 180
+
+Rules:
+
+- Only environment-specific values
+- No runtime values
+- No host names
+
+---
+
+10. Runtime Manifest Location
+
+User manifests shall reside in:
+
+manifests/
+
+Example:
+
+manifests/run_001.json
+
+---
+
+11. Manifest Contract
+
+Manifest is the primary runtime input.
+
+Example:
+
+{
+  "runId": "RUN_001",
+  "environment": "QA",
+  "targetHost": "qa-host-01",
+  "executionMode": "PARALLEL",
+  "artifacts": []
+}
+
+Rules:
+
+- Manifest drives execution
+- Manifest overrides configuration where allowed
+- Manifest validated before execution
+
+---
+
+12. Mandatory Manifest Fields
+
+{
+  "runId": "",
+  "environment": "",
+  "targetHost": "",
+  "executionMode": "",
+  "artifacts": []
+}
+
+Required:
+
+runId
+environment
+targetHost
+executionMode
+artifacts
+
+---
+
+13. Artifact Definition Contract
+
+Every artifact must contain:
+
+{
+  "artifactId": "",
+  "artifactName": "",
+  "artifactType": "",
+  "deploymentRequired": true,
+  "execution": {}
+}
+
+---
+
+14. Workspace Directory Contract
+
+Execution workspace:
+
+/apps/regression/workspace/<run_id>
+
+Example:
+
+/apps/regression/workspace/RUN_001
+
+---
+
+15. Artifact Workspace Contract
+
+Each artifact receives dedicated workspace.
+
+Example:
+
+/apps/regression/workspace/RUN_001/payment-service
+
+/apps/regression/workspace/RUN_001/billing-service
+
+Rules:
+
+- No sharing between artifacts
+- Required for parallel execution
+
+---
+
+16. Report Directory Contract
+
+Execution reports:
+
+/apps/regression/reports/<run_id>
+
+Example:
+
+/apps/regression/reports/RUN_001
+
+---
+
+17. Checkpoint Directory Contract
+
+Checkpoint storage:
+
+/apps/regression/checkpoints/<run_id>
+
+Example:
+
+/apps/regression/checkpoints/RUN_001
+
+---
+
+18. Naming Standards
+
+Variables
+
+Use snake_case.
+
+Example:
+
+artifact_timeout_minutes
+
+Invalid:
+
+artifactTimeoutMinutes
+
+---
+
+Roles
+
+Use lowercase.
+
+Example:
+
+manifest_validation
+runtime_host_validation
+
+---
+
+Playbooks
+
+Use lowercase.
+
+Example:
+
+execute_parallel.yml
+
+---
+
+19. Logging Contract
+
+Every role shall log:
+
+START
+END
+FAILURE
+
+Format:
+
+[TIMESTAMP]
+[RUN_ID]
+[ARTIFACT]
+[ROLE]
+[MESSAGE]
+
+Example:
+
+2025-05-18T10:15:00Z
+RUN_001
+payment-service
+deploy
+Deployment completed
+
+---
+
+20. Configuration Anti-Patterns
+
+The following shall NOT be stored in configuration files:
+
+runId
+targetHost
+executionMode
+resumeRunId
+selectedArtifacts
+
+These belong in runtime manifests.
+
+---
+
+21. Definition of Done
+
+Volume 1 is considered implemented when:
+
+✓ Repository structure created
+
+✓ Role skeletons created
+
+✓ Playbook skeletons created
+
+✓ Configuration hierarchy implemented
+
+✓ Manifest location established
+
+✓ Variable loading implemented
+
+✓ Environment resolution implemented
+
+✓ Logging standard implemented
+
+✓ Directory contracts enforced
+Implementation Specification - Volume 2
+
+Execution Framework & Role Contracts
+
+Version: 1.0
+
+Status: Approved Baseline
+
+---
+
+1. Purpose
+
+This document defines the execution framework, role contracts, playbook orchestration, execution lifecycle, parallel execution model, timeout framework, and role interaction contracts.
+
+This document is the primary implementation guide for coding agents.
+
+---
+
+2. Execution Modes
+
+Supported execution modes:
+
+SEQUENTIAL
+PARALLEL
+RESUME
+
+---
+
+3. Artifact Lifecycle
+
+Every artifact shall execute the following lifecycle:
+
+cleanup
+  ↓
+precheck
+  ↓
+deploy
+  ↓
+sanity
+  ↓
+execute
+  ↓
+validate
+  ↓
+housekeeping
+
+Rules:
+
+- Order is mandatory
+- Failure stops lifecycle for that artifact
+- In PARALLEL mode, failure of one artifact does not stop others
+- Status must be recorded after every phase
+
+---
+
+4. Standard Role Interface
+
+Every role shall expose the following output contract.
+
+role_result:
+  status: SUCCESS|FAILED|SKIPPED|TIMEOUT
+  phase: cleanup
+  start_time:
+  end_time:
+  duration_seconds:
+  error_message:
+
+---
+
+5. Execution Context Contract
+
+Every role shall receive:
+
+run_id:
+artifact_id:
+artifact_name:
+environment:
+target_host:
+execution_mode:
+artifact_workspace:
+artifact_report_directory:
+artifact_checkpoint_directory:
+
+---
+
+6. Cleanup Role
+
+Role:
+
+roles/cleanup
+
+Purpose:
+
+Remove previous execution artifacts.
+
+Inputs:
+
+artifact_workspace:
+
+Tasks:
+
+1. Verify workspace exists
+2. Remove temporary files
+3. Remove previous outputs
+4. Preserve checkpoint files
+
+Outputs:
+
+cleanup_result:
+  status:
+
+Failure Conditions:
+
+Workspace inaccessible
+Permission denied
+
+---
+
+7. Precheck Role
+
+Role:
+
+roles/precheck
+
+Purpose:
+
+Validate execution prerequisites.
+
+Checks:
+
+Disk space
+Workspace availability
+Artifact source accessibility
+Required runtime availability
+
+Outputs:
+
+precheck_result:
+  status:
+  failed_checks:
+
+Failure:
+
+Any mandatory prerequisite fails.
+
+---
+
+8. Artifact Download Role
+
+Role:
+
+roles/artifact_download
+
+Purpose:
+
+Retrieve deployment package.
+
+Inputs:
+
+artifact_source_url:
+download_directory:
+
+Tasks:
+
+1. Validate URL
+2. Download artifact
+3. Verify artifact exists
+4. Capture checksum if available
+
+Output:
+
+download_result:
+  status:
+  local_path:
+
+---
+
+9. Deploy Role
+
+Role:
+
+roles/deploy
+
+Purpose:
+
+Deploy artifact to execution workspace.
+
+Inputs:
+
+artifact_path:
+deployment_directory:
+
+Tasks:
+
+1. Create deployment directory
+2. Backup existing deployment (optional)
+3. Deploy artifact
+4. Verify deployment
+
+Output:
+
+deploy_result:
+  status:
+
+---
+
+10. Sanity Role
+
+Role:
+
+roles/sanity
+
+Purpose:
+
+Validate successful deployment.
+
+Checks:
+
+Required files exist
+Permissions valid
+Executable files accessible
+
+Output:
+
+sanity_result:
+  status:
+
+---
+
+11. Execute Role
+
+Role:
+
+roles/execute
+
+Purpose:
+
+Execute artifact workload.
+
+Inputs:
+
+command:
+working_directory:
+timeout_minutes:
+environment_variables:
+
+Tasks:
+
+1. Launch process
+2. Monitor process
+3. Capture exit code
+4. Capture stdout
+5. Capture stderr
+6. Record execution duration
+
+Output:
+
+execution_result:
+  status:
+  exit_code:
+  duration_seconds:
+  stdout_file:
+  stderr_file:
+
+---
+
+12. Validation Role
+
+Role:
+
+roles/validate
+
+Purpose:
+
+Determine regression outcome.
+
+Inputs:
+
+comparison_script:
+expected_output_location:
+actual_output_location:
+
+Tasks:
+
+1. Execute validation logic
+2. Compare outputs
+3. Generate validation summary
+
+Output:
+
+validation_result:
+  status:
+  differences_found:
+  difference_count:
+
+---
+
+13. Housekeeping Role
+
+Role:
+
+roles/housekeeping
+
+Purpose:
+
+Archive execution artifacts.
+
+Tasks:
+
+1. Compress temporary outputs
+2. Move artifacts to archive
+3. Remove transient files
+
+Output:
+
+housekeeping_result:
+  status:
+
+---
+
+14. Reporting Role
+
+Role:
+
+roles/reporting
+
+Purpose:
+
+Generate artifact reports.
+
+Generates:
+
+artifact_result.json
+validation_result.json
+
+Output Location:
+
+reports/<run_id>/<artifact_name>
+
+---
+
+15. Notification Role
+
+Role:
+
+roles/notification
+
+Purpose:
+
+Generate notifications.
+
+Notification Types:
+
+FAILURE
+COMPLETION
+SUMMARY
+
+Transport:
+
+AWX Native Notifications
+
+---
+
+16. Checkpoint Role
+
+Role:
+
+roles/checkpoint
+
+Purpose:
+
+Persist execution state.
+
+Checkpoint Events:
+
+STARTED
+COMPLETED
+FAILED
+SKIPPED
+
+Generated Files:
+
+artifact_name.started
+artifact_name.completed
+artifact_name.failed
+artifact_name.skipped
+
+---
+
+17. Parallel Execution Framework
+
+Playbook:
+
+playbooks/execute_parallel.yml
+
+Objective:
+
+Execute multiple artifact pipelines concurrently.
+
+---
+
+18. Parallel Execution Contract
+
+Maximum:
+
+max_parallel_artifacts: 5
+
+Execution Model:
+
+Artifact A Pipeline
+Artifact B Pipeline
+Artifact C Pipeline
+Artifact D Pipeline
+Artifact E Pipeline
+
+Each artifact owns:
+
+workspace
+report directory
+checkpoint directory
+
+No shared artifact resources allowed.
+
+---
+
+19. Parallel Failure Isolation
+
+Failure of:
+
+Artifact A
+
+must not stop:
+
+Artifact B
+Artifact C
+Artifact D
+
+Summary report aggregates final status.
+
+---
+
+20. Sequential Execution Framework
+
+Playbook:
+
+playbooks/execute_sequential.yml
+
+Execution Model:
+
+Artifact A
+  ↓
+Artifact B
+  ↓
+Artifact C
+
+Rules:
+
+- Next artifact starts only after previous artifact completes
+- No approval nodes in Phase 1
+
+---
+
+21. Timeout Framework
+
+Timeout Scope:
+
+Artifact Level
+
+Implementation:
+
+artifact_timeout_minutes:
+
+Behavior:
+
+1. Detect timeout
+2. Terminate process
+3. Mark artifact TIMEOUT
+4. Trigger notification
+5. Update checkpoint
+
+---
+
+22. Status Model
+
+Allowed Status Values:
+
+PENDING
+RUNNING
+SUCCESS
+FAILED
+TIMEOUT
+SKIPPED
+
+No additional status values allowed.
+
+---
+
+23. Failure Classification
+
+Framework shall classify:
+
+CONFIGURATION_FAILURE
+PRECHECK_FAILURE
+DOWNLOAD_FAILURE
+DEPLOYMENT_FAILURE
+SANITY_FAILURE
+EXECUTION_FAILURE
+VALIDATION_FAILURE
+TIMEOUT_FAILURE
+
+---
+
+24. Artifact Pipeline Contract
+
+Artifact pipeline result:
+
+{
+  "artifactName": "",
+  "status": "",
+  "failureType": "",
+  "startTime": "",
+  "endTime": "",
+  "durationSeconds": 0
+}
+
+---
+
+25. Playbook Responsibilities
+
+validate_manifest.yml
+
+Validate execution manifest
+
+validate_runtime_host.yml
+
+Validate target host
+
+execute_parallel.yml
+
+Run parallel artifact pipelines
+
+execute_sequential.yml
+
+Run sequential artifact pipelines
+
+resume_execution.yml
+
+Resume failed execution
+
+generate_reports.yml
+
+Aggregate reports
+
+notify.yml
+
+Generate notifications
+
+---
+
+26. Coding Rules
+
+Roles SHALL:
+
+Be idempotent
+Return structured outputs
+Not call AWX APIs directly
+Not contain hardcoded paths
+Not contain hardcoded credentials
+
+Playbooks SHALL:
+
+Only orchestrate roles
+Contain minimal business logic
+
+---
+
+27. Definition of Done
+
+Volume 2 is complete when:
+
+✓ All roles created
+
+✓ Role contracts implemented
+
+✓ Artifact lifecycle implemented
+
+✓ Parallel execution implemented
+
+✓ Sequential execution implemented
+
+✓ Timeout framework implemented
+
+✓ Failure classification implemented
+
+✓ Reporting hooks integrated
+
+✓ Checkpoint hooks integrated
+
+Implementation Specification - Volume 3
+
+Reporting, Checkpoint, Resume & Data Contracts
+
+Version: 1.0
+
+Status: Approved Baseline
+
+---
+
+1. Purpose
+
+This document defines:
+
+- Report contracts
+- Summary report contracts
+- Checkpoint contracts
+- Resume contracts
+- Failure contracts
+- Notification payload contracts
+- Aggregation algorithms
+
+All implementations shall conform to these contracts.
+
+---
+
+2. Reporting Architecture
+
+Reporting consists of:
+
+Artifact Reports
+      ↓
+Validation Reports
+      ↓
+Execution Summary Report
+      ↓
+AWX Published Artifacts
+      ↓
+Notifications
+
+Reports are generated locally first and then published.
+
+---
+
+3. Report Directory Structure
+
+reports/
+
+└── <run_id>/
+
+    ├── execution_summary.json
+
+    ├── payment-service/
+    │     ├── artifact_result.json
+    │     ├── validation_result.json
+    │     └── execution.log
+
+    ├── billing-service/
+    │     ├── artifact_result.json
+    │     ├── validation_result.json
+    │     └── execution.log
+
+---
+
+4. Artifact Result Contract
+
+File:
+
+artifact_result.json
+
+Schema:
+
+{
+  "runId": "",
+  "artifactId": "",
+  "artifactName": "",
+  "executionMode": "",
+  "environment": "",
+  "targetHost": "",
+  "status": "",
+  "failureType": "",
+  "startTime": "",
+  "endTime": "",
+  "durationSeconds": 0,
+  "deploymentRequired": true,
+  "validationExecuted": true,
+  "checkpointStatus": ""
+}
+
+---
+
+5. Artifact Status Values
+
+Allowed values:
+
+SUCCESS
+FAILED
+TIMEOUT
+SKIPPED
+
+No additional values permitted.
+
+---
+
+6. Validation Result Contract
+
+File:
+
+validation_result.json
+
+Schema:
+
+{
+  "runId": "",
+  "artifactId": "",
+  "artifactName": "",
+  "validationStatus": "",
+  "differencesFound": true,
+  "differenceCount": 0,
+  "validationScript": "",
+  "expectedOutputLocation": "",
+  "actualOutputLocation": "",
+  "validationTimestamp": ""
+}
+
+---
+
+7. Validation Status Values
+
+Allowed values:
+
+PASSED
+FAILED
+NOT_EXECUTED
+
+---
+
+8. Execution Summary Contract
+
+File:
+
+execution_summary.json
+
+Schema:
+
+{
+  "runId": "",
+  "environment": "",
+  "executionMode": "",
+  "targetHost": "",
+  "startTime": "",
+  "endTime": "",
+  "durationSeconds": 0,
+  "totalArtifacts": 0,
+  "successfulArtifacts": 0,
+  "failedArtifacts": 0,
+  "timedOutArtifacts": 0,
+  "skippedArtifacts": 0,
+  "validationFailures": 0,
+  "overallStatus": ""
+}
+
+---
+
+9. Overall Status Rules
+
+Overall status calculation:
+
+IF any artifact TIMEOUT
+    OVERALL = FAILED
+
+ELSE IF any artifact FAILED
+    OVERALL = FAILED
+
+ELSE
+    OVERALL = SUCCESS
+
+---
+
+10. Report Aggregation Algorithm
+
+Input:
+
+artifact_result.json
+validation_result.json
+
+Algorithm:
+
+1. Read all artifact reports
+2. Read all validation reports
+3. Calculate counts
+4. Build execution_summary.json
+5. Publish reports
+6. Trigger notifications
+
+---
+
+11. Checkpoint Architecture
+
+Checkpoint system supports:
+
+Execution Recovery
+Resume Workflow
+Execution Audit
+
+Checkpoint system is filesystem based.
+
+No database dependency.
+
+---
+
+12. Checkpoint Directory Structure
+
+checkpoints/
+
+└── <run_id>/
+
+    ├── run.properties
+
+    ├── payment-service.completed
+
+    ├── billing-service.failed
+
+    └── settlement-service.pending
+
+---
+
+13. run.properties Contract
+
+File:
+
+run.properties
+
+Example:
+
+runId=RUN_001
+environment=QA
+targetHost=qa-host-01
+executionMode=PARALLEL
+startTime=2025-05-18T10:00:00Z
+
+---
+
+14. Artifact Marker File Contract
+
+Allowed files:
+
+artifact.started
+artifact.completed
+artifact.failed
+artifact.skipped
+artifact.timeout
+
+Examples:
+
+payment-service.completed
+billing-service.failed
+
+Only one terminal marker may exist.
+
+---
+
+15. Marker File Content
+
+File contents:
+
+artifactName=payment-service
+status=COMPLETED
+timestamp=2025-05-18T10:30:00Z
+
+---
+
+16. Checkpoint State Machine
+
+PENDING
+  ↓
+
+STARTED
+  ↓
+
+COMPLETED
+FAILED
+TIMEOUT
+SKIPPED
+
+Terminal states:
+
+COMPLETED
+FAILED
+TIMEOUT
+SKIPPED
+
+---
+
+17. Resume Architecture
+
+Phase 1 supports:
+
+Artifact Boundary Resume
+
+Phase-level resume is not supported.
+
+---
+
+18. Resume Rules
+
+Resume is allowed only when:
+
+Run previously failed
+Checkpoint exists
+Original host available
+
+---
+
+19. Host Validation Rules
+
+Resume host must equal:
+
+targetHost
+
+stored in:
+
+run.properties
+
+Validation:
+
+requested_host == checkpoint_host
+
+If false:
+
+Resume Rejected
+
+---
+
+20. Resume Algorithm
+
+Input:
+
+runId
+targetHost
+
+Algorithm:
+
+1. Load run.properties
+
+2. Validate host
+
+3. Locate artifacts
+
+4. Skip COMPLETED
+
+5. Skip SKIPPED
+
+6. Restart FAILED
+
+7. Restart TIMEOUT
+
+8. Continue execution
+
+---
+
+21. Example Resume
+
+Checkpoint:
+
+payment-service.completed
+billing-service.failed
+settlement-service.pending
+
+Resume behavior:
+
+Skip payment-service
+
+Restart billing-service
+
+Execute settlement-service
+
+---
+
+22. Parallel Execution Checkpoint Rules
+
+Each artifact owns independent checkpoint files.
+
+Example:
+
+payment-service.completed
+billing-service.failed
+settlement-service.completed
+
+Artifacts must never modify each other's checkpoint files.
+
+---
+
+23. Failure Contract
+
+File:
+
+failure.json
+
+Schema:
+
+{
+  "runId": "",
+  "artifactName": "",
+  "failureType": "",
+  "failureMessage": "",
+  "failureTimestamp": ""
+}
+
+---
+
+24. Failure Types
+
+Allowed values:
+
+CONFIGURATION_FAILURE
+
+MANIFEST_FAILURE
+
+HOST_VALIDATION_FAILURE
+
+DOWNLOAD_FAILURE
+
+DEPLOYMENT_FAILURE
+
+SANITY_FAILURE
+
+EXECUTION_FAILURE
+
+VALIDATION_FAILURE
+
+TIMEOUT_FAILURE
+
+No additional failure types permitted.
+
+---
+
+25. Notification Architecture
+
+Notification generation occurs after:
+
+Artifact Failure
+
+Execution Completion
+
+Summary Generation
+
+---
+
+26. Failure Notification Contract
+
+Schema:
+
+{
+  "runId": "",
+  "artifactName": "",
+  "failureType": "",
+  "failureMessage": "",
+  "awxJobId": "",
+  "awxJobUrl": ""
+}
+
+---
+
+27. Completion Notification Contract
+
+Schema:
+
+{
+  "runId": "",
+  "overallStatus": "",
+  "totalArtifacts": 0,
+  "successfulArtifacts": 0,
+  "failedArtifacts": 0,
+  "durationSeconds": 0
+}
+
+---
+
+28. Notification Trigger Rules
+
+Failure:
+
+Immediately
+
+Completion:
+
+After execution summary generation
+
+Summary:
+
+After all artifacts complete
+
+---
+
+29. Report Retention
+
+Default:
+
+report_retention_days: 30
+
+After retention period:
+
+Archive
+or
+Delete
+
+Based on environment policy.
+
+---
+
+30. Checkpoint Retention
+
+Default:
+
+checkpoint_retention_days: 15
+
+Expired checkpoints may be removed.
+
+---
+
+31. Data Ownership
+
+Artifact Report:
+
+Reporting Role
+
+Validation Report:
+
+Validation Role
+
+Summary Report:
+
+Reporting Role
+
+Checkpoint Files:
+
+Checkpoint Role
+
+---
+
+32. Error Handling Rules
+
+Report generation failure:
+
+Do not fail execution
+
+Log warning
+
+Continue notifications
+
+Checkpoint generation failure:
+
+Fail execution
+
+Resume capability compromised
+
+---
+
+33. Coding Rules
+
+All JSON reports:
+
+Pretty printed
+
+UTF-8
+
+Valid JSON
+
+All timestamps:
+
+ISO-8601 UTC
+
+Example:
+
+2025-05-18T10:15:00Z
+
+---
+
+34. Definition of Done
+
+Volume 3 is complete when:
+
+✓ Artifact report schema implemented
+
+✓ Validation report schema implemented
+
+✓ Execution summary implemented
+
+✓ Report aggregation implemented
+
+✓ Checkpoint contract implemented
+
+✓ Resume algorithm implemented
+
+✓ Failure contracts implemented
+
+✓ Notification contracts implemented
+
+✓ Retention policies implemented
+
+
