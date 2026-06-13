@@ -1,1 +1,625 @@
 
+Technical Specification Document (TSD)
+
+Regression Automation Framework using AWX / Ansible Tower
+
+Version: 1.0
+
+Status: Draft
+
+Owner: Automation Platform Team
+
+---
+
+1. Purpose
+
+This document defines the technical architecture, framework design, execution model, reporting model, and operational behavior of the Regression Automation Framework implemented using AWX (Ansible Tower) and Ansible.
+
+The framework provides a reusable platform for deployment, execution, validation, reporting, and recovery of regression testing activities across multiple applications and artifacts.
+
+---
+
+2. Scope
+
+This document covers:
+
+- Environment configuration framework
+- Runtime host selection
+- Manifest-driven execution
+- Artifact lifecycle management
+- Sequential execution
+- Parallel execution
+- Validation framework
+- Reporting framework
+- Notification framework
+- Resume framework
+
+---
+
+3. Architecture Overview
+
+The framework consists of the following major components:
+
+User
+ |
+ v
+AWX Workflow
+ |
+ +-- Manifest Validation
+ |
+ +-- Environment Resolution
+ |
+ +-- Runtime Host Validation
+ |
+ +-- Artifact Pipeline
+ |
+ +-- Validation Framework
+ |
+ +-- Reporting Framework
+ |
+ +-- Notification Framework
+ |
+ +-- Resume Framework
+
+---
+
+4. Architecture Principles
+
+AP-001 Configuration Driven
+
+Framework behavior shall be controlled through:
+
+- Environment configuration
+- Manifest configuration
+- Artifact metadata
+
+No artifact-specific logic shall be hardcoded into workflows.
+
+---
+
+AP-002 Runtime Host Selection
+
+Execution hosts shall be supplied at runtime.
+
+Environment definitions shall not contain static host mappings.
+
+---
+
+AP-003 Artifact Isolation
+
+Each artifact shall execute in an isolated workspace.
+
+Example:
+
+/apps/regression/workspace/<run_id>/<artifact_name>
+
+This prevents collisions during parallel execution.
+
+---
+
+AP-004 Reusability
+
+Deployment, execution, validation, reporting, and notification capabilities shall be implemented using reusable Ansible roles.
+
+---
+
+5. Environment Configuration Framework
+
+Objective
+
+Provide environment-specific configuration independent of runtime host selection.
+
+Configuration Hierarchy
+
+group_vars/
+|
+├── all.yml
+├── platform.yml
+├── dev.yml
+├── qa.yml
+├── uat.yml
+└── prod.yml
+
+---
+
+all.yml
+
+Contains framework-wide defaults.
+
+Examples:
+
+- timeout settings
+- retry settings
+- reporting defaults
+- checkpoint defaults
+
+---
+
+platform.yml
+
+Contains organization-level settings.
+
+Examples:
+
+- Artifactory base URL
+- SMTP settings
+- AWX metadata
+
+---
+
+Environment Files
+
+Contain environment-specific values.
+
+Examples:
+
+- deployment roots
+- report locations
+- notification recipients
+- allowed runtime users
+
+---
+
+6. Runtime Host Selection Framework
+
+Objective
+
+Allow execution host selection at workflow launch.
+
+Input
+
+{
+  "environment": "QA",
+  "targetHost": "qa-host-01"
+}
+
+Validation
+
+The framework shall validate:
+
+- Host format
+- Host accessibility
+- Runtime user permissions
+
+Result
+
+The validated host becomes the execution target for all artifact activities.
+
+---
+
+7. Manifest Framework
+
+Objective
+
+Provide a structured contract for execution requests.
+
+The manifest contains:
+
+- Environment
+- Execution mode
+- Runtime host
+- Artifact list
+- Notification settings
+- Resume settings
+
+Validation
+
+Validation checks include:
+
+- Required field validation
+- Schema validation
+- Execution mode validation
+- Artifact definition validation
+
+Invalid manifests shall terminate execution.
+
+---
+
+8. Artifact Metadata Framework
+
+Objective
+
+Standardize onboarding of new artifacts.
+
+Metadata defines:
+
+- Deployment requirements
+- Execution commands
+- Validation strategy
+- Reporting configuration
+
+Example:
+
+artifact_name: payment-service
+
+deployment_required: true
+
+execution_command: ./run_regression.sh
+
+validation_script: compare_results.sh
+
+---
+
+9. Artifact Lifecycle Framework
+
+Each artifact follows the same lifecycle.
+
+Cleanup
+  |
+Precheck
+  |
+Deploy
+  |
+Sanity
+  |
+Execute
+  |
+Validation
+  |
+Housekeeping
+
+---
+
+Cleanup
+
+Removes previous execution artifacts.
+
+---
+
+Precheck
+
+Validates prerequisites.
+
+Examples:
+
+- disk space
+- file availability
+- permissions
+
+---
+
+Deploy
+
+Downloads and deploys artifacts.
+
+---
+
+Sanity
+
+Validates successful deployment.
+
+---
+
+Execute
+
+Runs artifact-specific execution commands.
+
+---
+
+Validation
+
+Compares outputs.
+
+Generates validation results.
+
+---
+
+Housekeeping
+
+Archives temporary files.
+
+---
+
+10. Parallel Execution Framework
+
+Objective
+
+Support concurrent execution of multiple artifacts.
+
+Constraints
+
+Maximum concurrent artifacts:
+
+5
+
+---
+
+Execution Model
+
+Artifact A
+Artifact B
+Artifact C
+Artifact D
+Artifact E
+
+execute simultaneously on the selected runtime host.
+
+---
+
+Isolation Requirements
+
+Each artifact shall have:
+
+- Dedicated workspace
+- Dedicated report directory
+- Dedicated checkpoint directory
+
+---
+
+Failure Handling
+
+Failure of one artifact shall not terminate other artifact executions.
+
+---
+
+11. Sequential Execution Framework
+
+Objective
+
+Support ordered artifact execution.
+
+Model
+
+Artifact A
+   |
+Artifact B
+   |
+Artifact C
+
+Each artifact begins only after successful completion of the previous artifact.
+
+---
+
+12. Timeout Supervision Framework
+
+Objective
+
+Prevent hung executions.
+
+Controls
+
+Artifact-level timeout.
+
+Example:
+
+artifact_timeout_minutes: 120
+
+Behavior
+
+When timeout occurs:
+
+- Process terminated
+- Artifact marked failed
+- Failure reported
+
+---
+
+13. Validation Framework
+
+Objective
+
+Determine regression success.
+
+Validation strategies:
+
+- File comparison
+- Script-based comparison
+- Custom validation logic
+
+Output:
+
+{
+  "artifact": "payment-service",
+  "status": "FAILED",
+  "difference_count": 12
+}
+
+---
+
+14. Reporting Framework
+
+Objectives
+
+Provide standardized execution visibility.
+
+---
+
+Artifact Report
+
+Generated for every artifact.
+
+Contains:
+
+- Artifact name
+- Status
+- Start time
+- End time
+- Duration
+- Validation status
+- Failure details
+
+---
+
+Validation Report
+
+Contains:
+
+- Comparison result
+- Difference summary
+- Validation outcome
+
+---
+
+Execution Summary Report
+
+Contains:
+
+- Total artifacts
+- Passed
+- Failed
+- Timed out
+- Validation summary
+
+---
+
+Report Storage
+
+/apps/regression/reports/<run_id>
+
+---
+
+AWX Publication
+
+Reports shall be published as AWX job artifacts.
+
+---
+
+15. Notification Framework
+
+Objectives
+
+Provide execution visibility.
+
+Supported notifications:
+
+- Failure
+- Completion
+- Summary
+
+---
+
+Failure Notification
+
+Triggered immediately when an artifact fails.
+
+Contains:
+
+- Artifact name
+- Failure reason
+- Job link
+
+---
+
+Completion Notification
+
+Triggered when execution completes.
+
+---
+
+Summary Notification
+
+Contains:
+
+- Total executed
+- Passed
+- Failed
+- Duration
+
+---
+
+16. Resume Framework
+
+Objective
+
+Recover from failed executions.
+
+---
+
+Resume Scope
+
+Phase 1 supports:
+
+Artifact-boundary resume only.
+
+---
+
+Checkpoint Structure
+
+/apps/regression/checkpoints/<run_id>
+
+---
+
+Checkpoint Files
+
+Example:
+
+payment.completed
+billing.failed
+settlement.pending
+
+---
+
+Resume Rules
+
+- Original host must be used
+- Failed artifact becomes restart point
+- Completed artifacts are skipped
+
+---
+
+17. Security Model
+
+Phase 1 implementation:
+
+- Runtime user validation
+- AWX credential usage
+- No hardcoded credentials
+
+Advanced hardening deferred.
+
+---
+
+18. Repository Structure
+
+repo/
+|
+├── playbooks/
+├── roles/
+├── scripts/
+├── templates/
+├── schemas/
+├── reports/
+├── docs/
+├── group_vars/
+└── manifests/
+
+---
+
+19. Failure Handling Strategy
+
+Framework shall classify failures as:
+
+- Validation Failure
+- Deployment Failure
+- Execution Failure
+- Timeout Failure
+- Configuration Failure
+
+Each failure shall:
+
+- Update report status
+- Trigger notifications
+- Update checkpoints
+
+---
+
+20. Operational Assumptions
+
+- AWX available
+- Execution Environment available
+- Artifactory accessible
+- SMTP configured
+- Runtime hosts accessible
+
+---
+
+21. Phase 2 Enhancements
+
+Future scope:
+
+- Approval workflows
+- Security hardening
+- Advanced reporting
+- Certification framework
+- Cross-host recovery
+- Automated rollback
