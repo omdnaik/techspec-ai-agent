@@ -3748,3 +3748,655 @@ A Jira implementation is complete only when:
 
 ✓ No contract violations against Volumes 1–5
 
+Implementation Specification - Volume 7
+
+Architecture Diagrams & Sequence Contracts
+
+Version: 1.0
+
+Status: Approved Baseline
+
+Purpose: Define the architectural diagrams, workflow diagrams, execution sequence contracts, reporting flows, checkpoint flows, and resume flows using Mermaid diagrams.
+
+These diagrams are implementation contracts and shall be used by AI coding agents when generating AWX workflows, playbooks, roles, and execution logic.
+
+---
+
+1. System Context Diagram
+
+flowchart TB
+
+    User[User]
+
+    AWX[AWX Workflow Engine]
+
+    Config[Configuration Framework]
+
+    Manifest[Manifest Framework]
+
+    Execution[Execution Engine]
+
+    Reporting[Reporting Framework]
+
+    Checkpoint[Checkpoint Framework]
+
+    Notifications[Notification Framework]
+
+    RuntimeHost[Runtime Host]
+
+    Artifactory[Artifactory]
+
+    User --> AWX
+
+    AWX --> Manifest
+
+    AWX --> Config
+
+    AWX --> Execution
+
+    Execution --> RuntimeHost
+
+    Execution --> Artifactory
+
+    Execution --> Reporting
+
+    Execution --> Checkpoint
+
+    Reporting --> Notifications
+
+    Notifications --> User
+
+---
+
+2. High-Level Execution Flow
+
+flowchart TD
+
+    Start([Start])
+
+    ManifestValidation[Validate Manifest]
+
+    ConfigResolution[Load Environment Configuration]
+
+    HostValidation[Validate Runtime Host]
+
+    ModeDecision{Execution Mode}
+
+    ParallelExecution[Execute Parallel]
+
+    SequentialExecution[Execute Sequential]
+
+    ResumeExecution[Resume Execution]
+
+    Reporting[Generate Reports]
+
+    Notifications[Send Notifications]
+
+    End([End])
+
+    Start --> ManifestValidation
+
+    ManifestValidation --> ConfigResolution
+
+    ConfigResolution --> HostValidation
+
+    HostValidation --> ModeDecision
+
+    ModeDecision -->|PARALLEL| ParallelExecution
+
+    ModeDecision -->|SEQUENTIAL| SequentialExecution
+
+    ModeDecision -->|RESUME| ResumeExecution
+
+    ParallelExecution --> Reporting
+
+    SequentialExecution --> Reporting
+
+    ResumeExecution --> Reporting
+
+    Reporting --> Notifications
+
+    Notifications --> End
+
+---
+
+3. Artifact Lifecycle Diagram
+
+flowchart TD
+
+    Cleanup
+
+    Precheck
+
+    Deploy
+
+    Sanity
+
+    Execute
+
+    Validate
+
+    Housekeeping
+
+    Cleanup --> Precheck
+
+    Precheck --> Deploy
+
+    Deploy --> Sanity
+
+    Sanity --> Execute
+
+    Execute --> Validate
+
+    Validate --> Housekeeping
+
+---
+
+4. Parallel Execution Architecture
+
+flowchart TB
+
+    Engine[Execution Engine]
+
+    Worker1[Worker 1]
+
+    Worker2[Worker 2]
+
+    Worker3[Worker 3]
+
+    Worker4[Worker 4]
+
+    Worker5[Worker 5]
+
+    ArtifactA[Artifact A]
+
+    ArtifactB[Artifact B]
+
+    ArtifactC[Artifact C]
+
+    ArtifactD[Artifact D]
+
+    ArtifactE[Artifact E]
+
+    Engine --> Worker1
+    Engine --> Worker2
+    Engine --> Worker3
+    Engine --> Worker4
+    Engine --> Worker5
+
+    Worker1 --> ArtifactA
+    Worker2 --> ArtifactB
+    Worker3 --> ArtifactC
+    Worker4 --> ArtifactD
+    Worker5 --> ArtifactE
+
+---
+
+5. Parallel Execution Sequence
+
+sequenceDiagram
+
+    participant AWX
+    participant Engine
+    participant WorkerA
+    participant WorkerB
+    participant WorkerC
+
+    AWX->>Engine: Start Parallel Execution
+
+    Engine->>WorkerA: Assign Artifact A
+
+    Engine->>WorkerB: Assign Artifact B
+
+    Engine->>WorkerC: Assign Artifact C
+
+    WorkerA-->>Engine: SUCCESS
+
+    WorkerB-->>Engine: FAILED
+
+    WorkerC-->>Engine: SUCCESS
+
+    Engine-->>AWX: Aggregated Results
+
+---
+
+6. Sequential Execution Sequence
+
+sequenceDiagram
+
+    participant AWX
+    participant Engine
+
+    AWX->>Engine: Start Sequential Execution
+
+    Engine->>Engine: Execute Artifact A
+
+    Engine->>Engine: Execute Artifact B
+
+    Engine->>Engine: Execute Artifact C
+
+    Engine-->>AWX: Execution Complete
+
+---
+
+7. Manifest Validation Sequence
+
+sequenceDiagram
+
+    participant User
+
+    participant AWX
+
+    participant ManifestValidation
+
+    User->>AWX: Submit Manifest
+
+    AWX->>ManifestValidation: Validate Manifest
+
+    ManifestValidation-->>AWX: Valid
+
+    AWX-->>User: Continue Workflow
+
+---
+
+8. Runtime Host Validation Sequence
+
+sequenceDiagram
+
+    participant AWX
+
+    participant Validator
+
+    participant Host
+
+    AWX->>Validator: Validate Host
+
+    Validator->>Host: Connectivity Check
+
+    Host-->>Validator: Reachable
+
+    Validator-->>AWX: Validation Success
+
+---
+
+9. Deployment Sequence
+
+sequenceDiagram
+
+    participant Deploy
+
+    participant Artifactory
+
+    participant RuntimeHost
+
+    Deploy->>Artifactory: Download Artifact
+
+    Artifactory-->>Deploy: Artifact Package
+
+    Deploy->>RuntimeHost: Deploy Artifact
+
+    RuntimeHost-->>Deploy: Deployment Success
+
+---
+
+10. Execution Sequence
+
+sequenceDiagram
+
+    participant Execute
+
+    participant RuntimeHost
+
+    Execute->>RuntimeHost: Launch Command
+
+    RuntimeHost-->>Execute: Process Started
+
+    RuntimeHost-->>Execute: Process Completed
+
+    Execute-->>Execute: Capture Exit Code
+
+    Execute-->>Execute: Capture Logs
+
+---
+
+11. Timeout Handling Sequence
+
+sequenceDiagram
+
+    participant Engine
+
+    participant Process
+
+    participant Checkpoint
+
+    participant Reporting
+
+    Engine->>Process: Start Process
+
+    Engine->>Engine: Start Timer
+
+    Engine->>Process: Timeout Reached
+
+    Process-->>Engine: Terminated
+
+    Engine->>Checkpoint: Mark TIMEOUT
+
+    Engine->>Reporting: Generate Failure Record
+
+---
+
+12. Reporting Flow
+
+flowchart TD
+
+    ArtifactReports[Artifact Reports]
+
+    ValidationReports[Validation Reports]
+
+    Aggregator[Report Aggregator]
+
+    Summary[Execution Summary]
+
+    ArtifactReports --> Aggregator
+
+    ValidationReports --> Aggregator
+
+    Aggregator --> Summary
+
+---
+
+13. Report Generation Sequence
+
+sequenceDiagram
+
+    participant Artifact
+
+    participant Reporting
+
+    participant Aggregator
+
+    Artifact->>Reporting: artifact_result.json
+
+    Artifact->>Reporting: validation_result.json
+
+    Reporting->>Aggregator: Collect Reports
+
+    Aggregator-->>Reporting: execution_summary.json
+
+---
+
+14. Checkpoint State Diagram
+
+stateDiagram-v2
+
+    [*] --> PENDING
+
+    PENDING --> STARTED
+
+    STARTED --> COMPLETED
+
+    STARTED --> FAILED
+
+    STARTED --> TIMEOUT
+
+    STARTED --> SKIPPED
+
+---
+
+15. Checkpoint Creation Sequence
+
+sequenceDiagram
+
+    participant Engine
+
+    participant Checkpoint
+
+    Engine->>Checkpoint: Create STARTED Marker
+
+    Engine->>Checkpoint: Create COMPLETED Marker
+
+    Checkpoint-->>Engine: Success
+
+---
+
+16. Resume Decision Flow
+
+flowchart TD
+
+    Start([Resume Request])
+
+    LoadCheckpoint[Load Checkpoint]
+
+    ValidateHost[Validate Host]
+
+    HostMatch{Host Match?}
+
+    Reject[Reject Resume]
+
+    LocateFailure[Locate Failed Artifact]
+
+    Resume[Resume Execution]
+
+    Start --> LoadCheckpoint
+
+    LoadCheckpoint --> ValidateHost
+
+    ValidateHost --> HostMatch
+
+    HostMatch -->|No| Reject
+
+    HostMatch -->|Yes| LocateFailure
+
+    LocateFailure --> Resume
+
+---
+
+17. Resume Sequence Diagram
+
+sequenceDiagram
+
+    participant AWX
+
+    participant Resume
+
+    participant Checkpoint
+
+    AWX->>Resume: Resume Request
+
+    Resume->>Checkpoint: Load Checkpoint
+
+    Checkpoint-->>Resume: State Data
+
+    Resume->>Resume: Identify Failed Artifact
+
+    Resume->>Resume: Skip Completed Artifacts
+
+    Resume->>Resume: Restart Failed Artifact
+
+    Resume-->>AWX: Resume Started
+
+---
+
+18. Failure Handling Flow
+
+flowchart TD
+
+    FailureDetected[Failure Detected]
+
+    Classify[Classify Failure]
+
+    UpdateCheckpoint[Update Checkpoint]
+
+    GenerateReport[Generate Failure Report]
+
+    Notify[Send Notification]
+
+    FailureDetected --> Classify
+
+    Classify --> UpdateCheckpoint
+
+    UpdateCheckpoint --> GenerateReport
+
+    GenerateReport --> Notify
+
+---
+
+19. Notification Sequence
+
+sequenceDiagram
+
+    participant Reporting
+
+    participant Notification
+
+    participant AWX
+
+    participant User
+
+    Reporting->>Notification: Summary Report
+
+    Notification->>AWX: Trigger Notification
+
+    AWX-->>User: Email Notification
+
+---
+
+20. AWX Workflow - Parallel
+
+flowchart TD
+
+    JT1[Validate Manifest]
+
+    JT2[Validate Runtime Host]
+
+    JT3[Execute Parallel]
+
+    JT4[Generate Reports]
+
+    JT5[Notify]
+
+    JT1 --> JT2
+
+    JT2 --> JT3
+
+    JT3 --> JT4
+
+    JT4 --> JT5
+
+---
+
+21. AWX Workflow - Sequential
+
+flowchart TD
+
+    JT1[Validate Manifest]
+
+    JT2[Validate Runtime Host]
+
+    JT3[Execute Sequential]
+
+    JT4[Generate Reports]
+
+    JT5[Notify]
+
+    JT1 --> JT2
+
+    JT2 --> JT3
+
+    JT3 --> JT4
+
+    JT4 --> JT5
+
+---
+
+22. AWX Workflow - Resume
+
+flowchart TD
+
+    JT1[Validate Manifest]
+
+    JT2[Validate Runtime Host]
+
+    JT3[Resume Execution]
+
+    JT4[Generate Reports]
+
+    JT5[Notify]
+
+    JT1 --> JT2
+
+    JT2 --> JT3
+
+    JT3 --> JT4
+
+    JT4 --> JT5
+
+---
+
+23. Directory Ownership Diagram
+
+flowchart TB
+
+    ExecutionEngine
+
+    Workspace
+
+    Reporting
+
+    Reports
+
+    Checkpoint
+
+    Checkpoints
+
+    ExecutionEngine --> Workspace
+
+    Reporting --> Reports
+
+    Checkpoint --> Checkpoints
+
+---
+
+24. Architectural Constraints
+
+The following constraints are mandatory:
+
+1. No static inventory host dependencies
+
+2. Runtime host selection required
+
+3. One workspace per artifact
+
+4. One checkpoint directory per run
+
+5. One report directory per run
+
+6. Resume only from artifact boundary
+
+7. Reporting independent of AWX APIs
+
+8. Checkpoints stored on filesystem
+
+9. Credentials stored only in AWX
+
+10. Parallel execution managed by Execution Engine
+
+---
+
+25. Definition of Done
+
+Volume 7 is complete when:
+
+✓ Architecture diagrams reviewed
+
+✓ Workflow diagrams approved
+
+✓ Resume diagrams approved
+
+✓ Reporting diagrams approved
+
+✓ Failure handling diagrams approved
+
+✓ Mermaid diagrams render successfully
+
+✓ Diagrams align with Volumes 1–6
