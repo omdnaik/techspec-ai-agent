@@ -1,1 +1,248 @@
+Product Requirements Document (PRD)
 
+Regression Automation Framework using AWX / Ansible Tower
+
+Version: 1.0
+
+Status: Draft
+
+Owner: Automation Platform Team
+
+---
+
+1. Executive Summary
+
+The Regression Automation Framework is a reusable automation platform built on AWX (Ansible Tower) and Ansible to standardize deployment, execution, validation, reporting, and recovery of regression testing activities across multiple applications and artifacts.
+
+The framework supports:
+
+- Runtime host selection
+- Environment-driven configuration
+- Sequential execution
+- Parallel execution
+- Validation and comparison reporting
+- Notification framework
+- Execution resumability
+- Artifact onboarding through metadata
+
+The framework removes dependence on environment-specific inventory host mappings and enables scalable execution across multiple target hosts.
+
+---
+
+2. Problem Statement
+
+Current regression execution processes suffer from:
+
+- Manual execution effort
+- Inconsistent deployment procedures
+- Environment-specific customizations
+- Limited reporting capability
+- Lack of restart/recovery mechanisms
+- Limited scalability for concurrent regression execution
+
+A standardized automation framework is required to address these challenges.
+
+---
+
+3. Goals
+
+Business Goals
+
+- Reduce manual effort
+- Improve execution consistency
+- Accelerate release validation
+- Improve reporting quality
+- Increase execution scalability
+
+Technical Goals
+
+- Manifest-driven execution
+- Runtime host selection
+- Parallel execution support
+- Artifact lifecycle standardization
+- Reporting standardization
+- Resume capability
+- Reusable onboarding model
+
+---
+
+4. Scope
+
+Included
+
+- Environment configuration framework
+- Runtime host selection
+- Manifest validation
+- Artifact deployment
+- Artifact execution
+- Parallel execution
+- Sequential execution
+- Validation framework
+- Reporting framework
+- Notifications
+- Basic resume capability
+
+Excluded
+
+- Per-artifact approval workflow
+- Cross-host resume
+- Automated rollback
+- Security hardening
+- Certification framework
+- Historical analytics
+
+---
+
+5. User Personas
+
+QA Engineer
+
+- Executes regression runs
+- Reviews validation reports
+- Investigates failures
+
+Release Manager
+
+- Monitors execution status
+- Reviews completion summaries
+
+Platform Administrator
+
+- Maintains framework
+- Configures environments
+- Onboards artifacts
+
+---
+
+6. Functional Requirements
+
+FR-001 Environment Configuration
+
+Framework shall load environment-specific configuration independent of inventory host definitions.
+
+FR-002 Runtime Host Selection
+
+Framework shall accept target host at execution time.
+
+FR-003 Manifest Validation
+
+Framework shall validate user-provided execution manifests.
+
+FR-004 Artifact Deployment
+
+Framework shall deploy artifacts from configured repositories.
+
+FR-005 Artifact Execution
+
+Framework shall execute artifact-specific commands.
+
+FR-006 Parallel Execution
+
+Framework shall support execution of multiple artifacts concurrently.
+
+Maximum parallel artifacts:
+
+5
+
+FR-007 Sequential Execution
+
+Framework shall support ordered execution of artifacts.
+
+FR-008 Validation
+
+Framework shall compare actual outputs against expected outputs.
+
+FR-009 Reporting
+
+Framework shall generate:
+
+- Artifact reports
+- Validation reports
+- Execution summaries
+
+FR-010 Notifications
+
+Framework shall support:
+
+- Failure notifications
+- Completion notifications
+- Summary notifications
+
+FR-011 Resume
+
+Framework shall support artifact-boundary resume execution.
+
+---
+
+7. Success Metrics
+
+- «90% automation coverage»
+- Support up to 5 concurrent artifacts
+- Resume success rate >95%
+- Standardized reporting for all executions
+- Artifact onboarding effort <1 day
+
+---
+
+8. Release Plan
+
+Phase 1
+
+- Environment configuration
+- Runtime host selection
+- Parallel execution
+- Sequential execution
+- Reporting
+- Notifications
+- Basic resume
+
+Phase 2
+
+- Approval workflows
+- Security hardening
+- Certification framework
+- Advanced reporting
+
+---
+
+9. High-Level Workflow
+
+User Submission
+→ Manifest Validation
+→ Environment Resolution
+→ Runtime Host Validation
+→ Deployment
+→ Execution
+→ Validation
+→ Reporting
+→ Notification
+
+---
+
+10. Risks
+
+- Runtime host dependency issues
+- Artifact-specific execution differences
+- Resource contention during parallel execution
+- Reporting aggregation complexity
+- Resume synchronization issues
+
+---
+
+11. Assumptions
+
+- AWX platform available
+- Execution Environment available
+- Artifactory accessible
+- SMTP available
+- Target hosts reachable
+
+---
+
+12. Out of Scope
+
+- Fine-grained phase-level resume
+- Approval governance
+- Dashboard analytics
+- Security certification
+- Automated rollback execution
