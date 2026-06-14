@@ -4,6 +4,11 @@
 
 Defines all data contracts exchanged between framework components.
 
+Manifest
+The manifest is the external JSON representation of the Execution Context Contract. It contains the user-supplied execution request, including environment, target host, execution mode, and artifact definitions. After validation, it is transformed into an internal Execution Context used by the execution engine.
+
+
+
 ---
 
 ## Execution Context Contract
