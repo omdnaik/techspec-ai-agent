@@ -98,3 +98,215 @@ For every Jira implementation:
    - Documentation
 
 8. Do not modify components outside the Jira scope.
+
+
+
+
+# Replace Section 39 - Agent Story Workflow
+
+## 39. Agent Story Workflow
+
+For every Jira:
+
+1. Read Jira Requirements Mapping Matrix
+
+2. Read referenced specifications
+
+3. Produce Design
+
+4. Wait for Approval
+
+5. Generate Code
+
+6. Generate Unit Tests
+
+7. Generate Integration Tests (if required)
+
+8. Update Documentation
+
+9. Execute Tests
+
+10. Run Review
+
+11. Produce Implementation Summary
+
+----
+# Replace Section 40 - Definition of Done
+
+## 40. Definition of Done
+
+A Jira implementation is complete only when:
+
+✓ Code generated
+
+✓ Unit tests generated
+
+✓ Integration tests generated (where required)
+
+✓ Documentation updated
+
+✓ Story acceptance criteria satisfied
+
+✓ No Data Contract violations
+
+✓ No Coding Standards violations
+
+✓ No Technical Specification violations
+
+✓ Review completed
+
+✓ All required tests passing
+
+# Add New Section After 1A Matrix
+
+## 1C. Critical Implementation Order
+
+### Phase 1 - Foundation
+
+US-001 Repository Structure
+
+US-002 Environment Configuration
+
+US-004 Credential Framework
+
+US-005 Manifest Schema
+
+US-013 Artifact Metadata Framework
+
+---
+
+### Phase 2 - Validation
+
+US-006 Manifest Validation Role
+
+US-007 Manifest Validation Playbook
+
+US-002A Runtime Host Validation
+
+US-040 Runtime User Validation
+
+US-003 Execution Environment Validation
+
+---
+
+### Phase 3 - Lifecycle Roles
+
+US-014 Cleanup Role
+
+US-015 Precheck Role
+
+US-020 Deploy Role
+
+US-021 Artifact Download Component
+
+US-016 Sanity Role
+
+US-018 Validation Role
+
+US-017 Housekeeping Role
+
+---
+
+### Phase 4 - Reporting
+
+US-026 Reporting Framework
+
+US-027 Report Aggregation
+
+US-028A Publish Reports
+
+---
+
+### Phase 5 - Checkpoint & Resume
+
+US-009 Checkpoint Contract
+
+US-010 Checkpoint Manager
+
+US-011 Checkpoint Resolver
+
+US-012 Resume Dispatcher
+
+---
+
+### Phase 6 - Execution Engine
+
+US-023 Parallel Execution Engine
+
+US-024 Timeout Framework
+
+US-022 Sequential Execution
+
+---
+
+### Phase 7 - Execution Integration
+
+US-025 Execution Engine Integration
+
+US-019 Artifact Pipeline
+
+---
+
+### Phase 8 - Notifications
+
+US-029 Notification Framework
+
+---
+
+### Phase 9 - AWX
+
+US-034 Job Templates
+
+US-035 Sequential Workflow
+
+US-036 Parallel Workflow
+
+US-037 Resume Workflow
+
+# Add New Section After 1C
+
+## 1D. Review Requirements
+
+| Jira | Review Required |
+|--------|--------|
+| US-001 | No |
+| US-002 | No |
+| US-003 | Yes |
+| US-004 | No |
+| US-005 | No |
+| US-006 | Yes |
+| US-007 | No |
+| US-002A | Yes |
+| US-040 | Yes |
+| US-013 | No |
+| US-014 | No |
+| US-015 | No |
+| US-016 | No |
+| US-017 | No |
+| US-018 | Yes |
+| US-019 | Yes |
+| US-020 | No |
+| US-021 | No |
+| US-022 | Yes |
+| US-023 | Yes |
+| US-024 | Yes |
+| US-025 | Yes |
+| US-026 | Yes |
+| US-027 | Yes |
+| US-028A | No |
+| US-029 | Yes |
+| US-034 | No |
+| US-035 | Yes |
+| US-036 | Yes |
+| US-037 | Yes |
+| US-009 | Yes |
+| US-010 | Yes |
+| US-011 | Yes |
+| US-012 | Yes |
+
+
+
+
+
+
+
