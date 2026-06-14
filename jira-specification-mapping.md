@@ -306,7 +306,172 @@ US-037 Resume Workflow
 
 
 
+I plan to use below prompts for execution
 
+1. Design prompt (gpt-oss) 
+
+Implement <JIRA_ID>.
+
+Use Volume 6 Jira Requirements Mapping Matrix as the primary navigation document.
+
+Instructions:
+
+1. Read the documents listed for <JIRA_ID> in the Jira Requirements Mapping Matrix.
+2. Use Volume 6 as the authoritative source for:
+   - scope
+   - impacted components
+   - contracts
+   - test scope
+3. Follow:
+   - Technical Specification
+   - Data Contracts
+   - Coding Standards
+4. Do not infer requirements outside the specifications.
+5. Do not generate code.
+
+Produce:
+
+1. Jira Understanding
+   - objective
+   - acceptance criteria
+   - impacted components
+
+2. Design
+   - approach
+   - sequence flow
+   - component interactions
+
+3. File Impact Analysis
+   - files to create
+   - files to modify
+
+4. Contract Analysis
+   - contracts consumed
+   - contracts produced
+
+5. Error Handling Strategy
+
+6. Testing Strategy
+   - unit tests
+   - integration tests
+
+7. Risks and Assumptions
+
+Identify:
+- ambiguities
+- missing specifications
+- conflicting requirements
+
+Wait for approval before generating code.
+
+2. Implementation Prompt (qwen-coder-next) 
+ 
+Implement approved design for <JIRA_ID>.
+
+Use Volume 6 Jira Requirements Mapping Matrix as the primary navigation document.
+
+Instructions:
+
+1. Read the documents listed for <JIRA_ID>.
+2. Follow:
+   - Technical Specification
+   - Data Contracts
+   - Coding Standards
+   - Approved Design
+
+3. Modify only:
+   - Roles listed in Volume 6
+   - Playbooks listed in Volume 6
+   - Schemas listed in Volume 6
+   - Tests required by Volume 6
+
+4. Do not modify components outside the Jira scope.
+
+5. Follow all contracts exactly.
+6. Follow all architectural constraints exactly.
+7. Follow all ADRs exactly.
+
+Generate:
+
+1. Production Code
+2. Unit Tests
+3. Integration Tests (if required by Volume 6)
+4. README Updates
+5. Example Configuration (if applicable)
+
+Provide:
+
+1. Files Created
+2. Files Modified
+3. Contract Compliance Summary
+4. Test Coverage Summary
+5. Assumptions Made
+
+Highlight any specification gaps instead of inventing behavior.
+
+3. Review prompt (gpt-oss) 
+
+Review implementation of <JIRA_ID>.
+
+Use Volume 6 Jira Requirements Mapping Matrix as the primary navigation document.
+
+Validate implementation against:
+
+- Technical Specification
+- Data Contracts
+- Coding Standards
+- Approved Design
+- All documents referenced for <JIRA_ID> in Volume 6
+
+Review Areas:
+
+1. Scope Compliance
+   - Were unrelated files modified?
+   - Were required files missed?
+
+2. Architectural Compliance
+   - ADR compliance
+   - Component responsibility compliance
+   - Component interaction compliance
+   - Architectural constraint compliance
+
+3. Contract Compliance
+   - Input contracts
+   - Output contracts
+   - Checkpoint contracts
+   - Report contracts
+   - Notification contracts
+
+4. Coding Standards Compliance
+   - Logging
+   - Error handling
+   - Naming conventions
+   - Repository structure
+
+5. Testing Compliance
+   - Required unit tests present
+   - Required integration tests present
+   - Missing edge cases
+
+6. Security Review
+   - Hardcoded credentials
+   - Hardcoded paths
+   - Sensitive data leakage
+
+7. Maintainability Review
+   - Complexity concerns
+   - Tight coupling
+   - Reusability concerns
+
+Produce:
+
+1. Critical Issues
+2. Major Issues
+3. Minor Issues
+4. Missing Requirements
+5. Improvement Recommendations
+
+Do not modify code.
 
 
 
