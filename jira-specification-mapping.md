@@ -473,5 +473,21 @@ Produce:
 
 Do not modify code.
 
+Use Ansible Jinja2 template processing.
 
+Rationale:
+
+- Aligns with Ansible best practices.
+- Avoids introducing custom Python/Shell preprocessing logic.
+- Keeps environment resolution independent of AWX.
+- Allows execution from both AWX and standalone ansible-playbook runs.
+- Environment variables (env_name, region) shall be supplied from the manifest/execution context and rendered through environment_template.yml.j2.
+
+Implement:
+- environment_template.yml.j2
+- environment_resolver role
+- unit tests
+- integration tests
+
+Do not implement a custom template engine or preprocessing script.
 
