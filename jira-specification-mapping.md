@@ -71,3 +71,30 @@ V7 = Architecture Diagrams
 DC = Data Contracts
 
 CS = Coding Standards
+
+
+# 1B. Agent Prompt Template
+
+For every Jira implementation:
+
+1. Identify the Jira in the Jira Requirements Mapping Matrix.
+
+2. Read only the documents listed in the Documents column.
+
+3. Modify only the Roles, Playbooks and Schemas listed for the Jira.
+
+4. Follow:
+   - Technical Specification
+   - Data Contracts
+   - Coding Standards
+
+5. Start with Design.
+
+6. Wait for approval before implementation.
+
+7. Generate:
+   - Code
+   - Tests
+   - Documentation
+
+8. Do not modify components outside the Jira scope.
