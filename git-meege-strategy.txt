@@ -1,0 +1,51 @@
+Perfect. Since you are comfortable with rebasing, you can use one of Git's most powerful commands—git rebase --onto—to neatly detach and re-attach your stacked branches as the base code gets merged.
+When approvals are back and the PRs start flowing, here is your exact execution plan to unravel the stack:
+### Step 1: Merge JIRA-111
+Once your colleague's branch is merged into develop, you need to update JIRA-111 and merge it.
+```bash
+# Get the latest develop (which now has your colleague's code)
+git checkout develop
+git pull origin develop
+
+# Rebase JIRA-111 onto the updated develop
+git checkout feature/YOUR-JIRA-111
+git rebase develop
+
+# Force push since you rewrote the history
+git push -f origin feature/YOUR-JIRA-111
+
+```
+Now, raise the PR for JIRA-111 and get it merged into develop.
+### Step 2: Untangle JIRA-222 using --onto
+Once JIRA-111 is merged into develop, your JIRA-222 branch is still pointing to the old, un-rebased history of JIRA-111. If you try a normal rebase, Git might get confused by duplicate commits.
+You need to tell Git: *"Take the commits that are strictly for JIRA-222, and move them directly onto develop."*
+```bash
+# Update develop with the newly merged JIRA-111 code
+git checkout develop
+git pull origin develop
+
+# The magic command: rebase --onto <new-base> <old-base> <branch-to-move>
+git rebase --onto develop feature/YOUR-JIRA-111 feature/YOUR-JIRA-222
+
+# Force push the cleanly detached branch
+git push -f origin feature/YOUR-JIRA-222
+
+```
+Now JIRA-222 is completely untangled from the old stack and sits cleanly on top of develop. Raise the PR and get it merged.
+### Step 3: Untangle JIRA-333
+Repeat the exact same process once JIRA-222 is merged.
+```bash
+# Update develop again
+git checkout develop
+git pull origin develop
+
+# Snip JIRA-333 off the old JIRA-222 branch and graft it onto develop
+git rebase --onto develop feature/YOUR-JIRA-222 feature/YOUR-JIRA-333
+
+# Force push
+git push -f origin feature/YOUR-JIRA-333
+
+```
+Raise the final PR.
+### Why this is the best approach
+Using rebase --onto surgically removes the commits of the lower branches once they are no longer needed in your local stack. By following this sequence, every single Pull Request will show a perfectly clean diff containing only the code written for that specific Jira ticket, and you won't lose a single minute of productivity today.
