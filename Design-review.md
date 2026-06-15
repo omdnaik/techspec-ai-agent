@@ -314,3 +314,40 @@ Before making changes:
 3. Explain configuration generation approach.
 4. Explain validation approach.
 5. Wait for approval.
+
+### General Project & Architecture Review
+**Prompt 1: Code Quality, Idempotency, and Maintainability**
+> "Act as a Senior Cloud Infrastructure Architect. Review the provided Ansible playbook(s) and roles. Evaluate the codebase based on the following criteria:
+>  1. **Idempotency:** Identify any tasks that are not idempotent (e.g., overuse of command or shell modules where native modules exist) and suggest explicit module alternatives.
+>  2. **Structure & Modularity:** Assess the directory structure. Are variables explicitly defined in group_vars/host_vars rather than hardcoded? Is the logic properly abstracted into reusable roles or collections?
+>  3. **Error Handling:** Review the use of block/rescue/always constructs for fault tolerance and cleanup mechanisms.
+>  4. **Maintainability:** Check for explicit configuration over assumed defaults.
+> Please output a structured review with specific line-item findings, the risk associated with each finding, and the refactored YAML for any anti-patterns."
+> 
+**Prompt 2: AWX-Specific Configuration and Security**
+> "Review the enterprise AWX deployment strategy for this Ansible project. Analyze the following aspects:
+>  1. **Job Templates & Workflows:** Are Job Templates configured with appropriate variable surveys? Are complex orchestrations properly utilizing AWX Workflow Job Templates rather than monolithic playbooks?
+>  2. **Inventory Management:** Evaluate the use of dynamic inventories versus static files. Are Smart Inventories being utilized effectively for host targeting?
+>  3. **Security & Credentials:** Ensure no sensitive data is passed as extra variables in plain text. Verify the strategy for AWX Credential Types (e.g., HashiCorp Vault/CyberArk integration or native AWX credentials) and Ansible Vault usage.
+>  4. **Execution Environments (EE):** If using modern AWX, review the dependencies. Are custom Execution Environments built securely with only the necessary collections and Python libraries?
+> Provide a gap analysis outlining what enterprise AWX best practices are missing from this configuration."
+> 
+### Performance & Scaling Review
+**Prompt 3: Execution Speed and Playbook Optimization**
+> "Analyze the following Ansible project for performance bottlenecks and execution speed. Provide recommendations focusing on:
+>  1. **Fact Gathering:** Identify if gather_facts: yes is used unnecessarily. Recommend strategies for AWX Fact Caching (e.g., Redis or native AWX caching) and specific gather_subset configurations.
+>  2. **Connection Optimization:** Check for the compatibility and utilization of SSH Pipelining and ControlPersist.
+>  3. **Task Delegation & Asynchronous Execution:** Identify long-running tasks (like database backups, large file transfers, or package installations) that should utilize async and poll to free up AWX worker threads.
+>  4. **Module Efficiency:** Point out modules known for slow execution (e.g., unoptimized loops using with_items instead of native module list processing) and provide optimized equivalents.
+> Output a prioritized list of performance optimization recommendations, ranking them from highest impact to lowest impact."
+> 
+**Prompt 4: AWX Job Scaling & Infrastructure Load**
+> "Review the scalability of this Ansible project when executed via AWX against a large target inventory (1,000+ nodes). Detail a strategy to optimize the AWX Job Template configuration for maximum throughput:
+>  1. **Job Slicing:** Recommend the optimal Job Slicing configuration to distribute the workload across multiple AWX execution nodes.
+>  2. **Forks & Concurrency:** Suggest an appropriate forks value based on typical AWX resource constraints (CPU/RAM) and network throughput limits.
+>  3. **Strategy Plugins:** Evaluate if the default linear strategy is a bottleneck. When should free or host_pinned strategies be applied to this specific workflow?
+>  4. **Logging & Callback Overhead:** Assess the impact of AWX logging overhead. Are debug messages or verbose outputs unnecessarily flooding the AWX PostgreSQL database during large runs?
+> Provide a performance tuning checklist specifically tailored for running this playbook at an enterprise scale."
+> 
+
+
