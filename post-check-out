@@ -1,0 +1,116 @@
+#!/usr/bin/env node
+
+const fs = require('fs');
+const path = require('path');
+const { spawn, execSync } = require('child_process');
+
+// 1. Check if this is a branch switch (1) or a single file checkout (0)
+const isBranchSwitch = process.argv[4] === '1';
+if (!isBranchSwitch && process.argv[2] !== 'run-analysis') {
+    process.exit(0);
+}
+
+// 2. Synchronous Idempotency Check
+if (process.argv[2] !== 'run-analysis') {
+    try {
+        // Ask Git directly for the branch name safely across any repository
+        const branchName = execSync('git symbolic-ref --short HEAD', { encoding: 'utf8', stdio: 'pipe' }).trim();
+        const jiraMatch = branchName.match(/[A-Z]+-[0-9]+/);
+
+        // Safety Net: Exit instantly if the branch name doesn't have a Jira key
+        if (!jiraMatch) process.exit(0); 
+        
+        const jiraKey = jiraMatch[0];
+        const reportPath = path.join('docs', 'analysis', `${jiraKey}-blueprint.md`);
+        
+        if (fs.existsSync(reportPath)) process.exit(0);
+
+        // Spawn detached background process to prevent terminal blocking
+        const child = spawn(process.execPath, [__filename, 'run-analysis', branchName, jiraKey], {
+            detached: true,
+            stdio: 'ignore',
+            windowsHide: true 
+        });
+        
+        child.unref(); 
+        process.exit(0); // Return control to the developer instantly
+    } catch (e) {
+        process.exit(0); 
+    }
+}
+
+// 3. Asynchronous Background Worker
+async function run() {
+    const [,, , branchName, jiraKey] = process.argv;
+    const corpJiraToken = process.env.CORPORATE_JIRA_TOKEN;
+    const reqDir = path.join('.opencode', 'requirements');
+    const reqFile = path.join(reqDir, `${jiraKey}.md`);
+    const outputDir = path.join('docs', 'analysis');
+    const outputFile = path.join(outputDir, `${jiraKey}-blueprint.md`);
+
+    try {
+        fs.mkdirSync(reqDir, { recursive: true });
+        fs.mkdirSync(outputDir, { recursive: true });
+
+        // 3a. Fetch requirement text from Jira
+        if (!fs.existsSync(reqFile)) {
+            const res = await fetch(`https://your-company.atlassian.net/rest/api/3/issue/${jiraKey}`, {
+                headers: { 'Authorization': `Bearer ${corpJiraToken}` }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            const summary = data.fields?.summary || '';
+            const desc = data.fields?.description || '';
+            fs.writeFileSync(reqFile, `# ${jiraKey}: ${summary}\n\n${desc}`);
+        }
+
+        // 3b. Dynamically inject the MCP server config into OpenCode at runtime
+        const mcpConfig = {
+            mcp: {
+                depwire: {
+                    type: "local",
+                    command: process.platform === "win32" ? ["npx.cmd", "-y", "depwire-cli", "mcp"] : ["npx", "-y", "depwire-cli", "mcp"],
+                    enabled: true
+                }
+            }
+        };
+
+        // 3c. Construct the prompt with generic framework terminology and target SQL dirs
+        const prompt = `You are an Enterprise Systems Architect. Your task is to analyze the requirement for Jira ticket ${jiraKey} and generate a comprehensive blueprint of required code changes.
+
+Please execute the following steps sequentially:
+1. Requirement Extraction: Read the requirement details from '${reqFile}'.
+2. Architecture Mapping: Use the local 'depwire' MCP server tools to trace the current dependency graph. Focus on identifying the core application entry points, business logic handlers, and data persistence models. Do not guess dependencies; rely strictly on Depwire's deterministic AST graph.
+3. Database Script Analysis: Use your native 'glob' and 'read' tools to locate and inspect any .sql scripts specifically located within the 'hubs/*/sql' directories. Cross-reference these SQL files with the application's data access layer.
+4. Synthesis: Generate a detailed, layer-by-layer markdown blueprint detailing the exact source files to be modified, the SQL changes required, and a structural impact analysis. Output the final blueprint using your 'write' tool to the file '${outputFile}'.`;
+
+        // 3d. Invoke OpenCode CLI headlessly with explicit directory locking
+        const repoRoot = process.cwd(); 
+        const opencodeCmd = process.platform === 'win32' ? 'opencode.cmd' : 'opencode';
+        
+        const agent = spawn(opencodeCmd, [
+            'run',
+            '--agent', 'plan',
+            '--dir', repoRoot,
+            prompt
+        ], { 
+            windowsHide: true,
+            env: {
+                ...process.env,
+                OPENCODE_CONFIG_CONTENT: JSON.stringify(mcpConfig)
+            }
+        });
+
+        // Wait for the agent to finish execution
+        await new Promise(resolve => agent.on('exit', resolve));
+
+        // 3e. Trigger Windows desktop notification
+        if (process.platform === 'win32') {
+            spawn('powershell', ['-Command', `& {Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show('Architectural blueprint for ${jiraKey} generated successfully!','OpenCode Automation')}`], { windowsHide: true });
+        }
+    } catch (err) {
+        // Silently fail background tasks to avoid interrupting workflow
+    }
+}
+
+run();
