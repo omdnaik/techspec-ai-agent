@@ -1,3 +1,27 @@
+        // 3c. Construct the prompt as a SINGLE continuous line for Windows CMD
+        const prompt = `You are an Enterprise Systems Architect. Your task is to analyze the requirement for Jira ticket ${jiraKey} and generate a comprehensive blueprint of required code changes. Step 1: Read the requirement details and OMR description from '${reqFile}'. Step 2: Use the local 'depwire' MCP server tools to trace the current dependency graph. Focus on identifying core application entry points, business logic handlers, and data persistence models. Rely strictly on Depwire's deterministic AST graph. Step 3: Use your native 'glob' and 'read' tools to locate and inspect any.sql scripts specifically located within the 'hubs/*/sql' directories. Cross-reference these SQL files with the application's data access layer. Step 4: Generate a detailed, layer-by-layer markdown blueprint detailing the exact source files to be modified, the SQL changes required, and a structural impact analysis. Output the final blueprint using your 'write' tool to the file '${outputFile}'.`;
+
+        // 3d. Invoke OpenCode CLI headlessly with explicit directory locking
+        const repoRoot = process.cwd(); 
+        
+        // Because it is in your PATH and we use shell: true, we can just use 'opencode'
+        const opencodeCmd = 'opencode'; 
+        
+        writeLog(`[${jiraKey}] Launching OpenCode agent with directory set to project root: ${repoRoot}`);
+        
+        const agent = spawn(opencodeCmd,, { 
+            windowsHide: true,
+            shell: true, // <--- This fixes the EINVAL crash & auto-resolves the extension
+            env: {
+              ...process.env,
+                OPENCODE_CONFIG_CONTENT: JSON.stringify(mcpConfig)
+            }
+        });
+
+
+
+
+
 
 {
   "customModes": [
