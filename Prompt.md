@@ -1,3 +1,119 @@
+
+// 3. Asynchronous Background Worker
+async function run() {
+    const [,, , branchName, jiraKey] = process.argv;
+    writeLog(`[${jiraKey}] Worker initialized for branch: ${branchName}`);
+
+    const outputDir = path.join('docs', 'analysis');
+    const outputFile = path.join(outputDir, `${jiraKey}-blueprint.md`);
+
+    try {
+        fs.mkdirSync(outputDir, { recursive: true });
+
+        // 3a. Dynamically inject the MCP config, permissions, AND a Custom Agent
+        const mcpConfig = {
+            permission: {
+                "*": "allow" 
+            },
+            agent: {
+                "architect": {
+                    "mode": "primary",
+                    "description": "Deeply analyzes code to produce human-readable technical blueprints.",
+                    "prompt": "You are a Principal Systems Architect. Your audience is HUMAN software engineers. You must do the deep analysis yourself. Use the Jira MCP server to fetch the issue details. Use the 'depwire' MCP server tools to map the AST graph. Use your 'ls' tool and 'read' tool to inspect SQL scripts. Output the complete blueprint directly as your final text response.",
+                    "tools": {
+                        "task": false,
+                        "write": false,       
+                        "edit": false,
+                        "apply_patch": false,
+                        "bash": false,
+                        "glob": false,        
+                        "grep": false         
+                    }
+                }
+            },
+            mcp: {
+                depwire: {
+                    type: "local",
+                    command: process.platform === "win32"? ["depwire.cmd", "mcp"] : ["depwire", "mcp"],
+                    enabled: true
+                }
+            }
+        };
+
+        // 3b. Update prompt: Explicitly instruct the agent to fetch the Jira ticket via MCP
+        const prompt = `Analyze the requirement for Jira ticket ${jiraKey}. Step 1: Use your Jira MCP tools to fetch the ticket details. You MUST extract the standard description AND the custom field 'customfield_14724' (OMR Description) to gain an in-depth understanding of the required changes. Step 2: Use the local 'depwire' MCP server tools to trace the current dependency graph. Focus on identifying core application entry points, business logic handlers, and data persistence models. Step 3: Database Script Analysis. Use your native 'ls' tool recursively from the project root to locate the 'hubs' directory and find the.sql scripts located in the 'hubs/*/sql' directories. Use your 'read' tool to inspect them. Step 4: Output the complete, human-readable markdown blueprint detailing the exact source files to be modified and the SQL changes required directly as your final text response in the console.`;
+
+        // 3c. Invoke OpenCode CLI headlessly
+        const repoRoot = process.cwd(); 
+        const opencodeCmd = 'opencode'; 
+        
+        writeLog(`[${jiraKey}] Launching OpenCode agent with directory set to project root: ${repoRoot}`);
+        
+        const agent = spawn(opencodeCmd,, { 
+            windowsHide: true,
+            shell: true, 
+            env: {
+            ...process.env,
+                OPENCODE_CONFIG_CONTENT: JSON.stringify(mcpConfig),
+                OPENCODE_DISABLE_MODELS_FETCH: 'true',
+                OPENCODE_DISABLE_DEFAULT_PLUGINS: 'true'
+            }
+        });
+
+        // 3d. Capture and accumulate standard output of the AI execution
+        let blueprintContent = '';
+
+        agent.stdout.on('data', (data) => {
+            const text = data.toString();
+            blueprintContent += text;
+            writeLog(`[${jiraKey}] OpenCode Output: ${text.trim()}`);
+        });
+
+        agent.stderr.on('data', (data) => {
+            writeLog(`[${jiraKey}] OpenCode Log: ${data.toString().trim()}`);
+        });
+
+        // Wait for the agent to finish execution
+        await new Promise((resolve) => {
+            agent.on('exit', (code) => {
+                writeLog(`[${jiraKey}] OpenCode agent exited with status code: ${code}`);
+                
+                // Write the accumulated blueprint to the output file directly
+                if (code === 0 && blueprintContent.trim().length > 0) {
+                    try {
+                        fs.writeFileSync(outputFile, blueprintContent);
+                        writeLog(`[${jiraKey}] Successfully wrote blueprint file to: ${outputFile}`);
+                    } catch (writeErr) {
+                        writeLog(`[${jiraKey}] Failed to write blueprint file: ${writeErr.message}`);
+                    }
+                } else {
+                    writeLog(`[${jiraKey}] Warning: No blueprint content was captured from OpenCode's stdout.`);
+                }
+                resolve(code);
+            });
+            agent.on('error', (err) => {
+                writeLog(`[${jiraKey}] OpenCode spawn error: ${err.message}`);
+                resolve(1);
+            });
+        });
+
+        // 3e. Trigger Windows desktop notification
+        if (process.platform === 'win32') {
+            spawn('powershell',::Show('Architectural blueprint for ${jiraKey} generated successfully!','OpenCode Automation')}`], { windowsHide: true });
+        }
+    } catch (err) {
+        writeLog(`[${jiraKey}] FATAL BACKGROUND ERROR: ${err.message}\n${err.stack}`);
+    }
+}
+
+run();
+
+
+
+
+
+
+
 Based on the exact progression of your script and the images we analyzed, you only need to modify **three specific blocks** to fix this issue.
 By disabling the task and write tools, we force the AI to stop delegating to child agents and output the text directly for our script to capture.
 Here are the **only three changes** you need to make to your current script:
