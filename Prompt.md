@@ -1,3 +1,72 @@
+Based on the exact progression of your script and the images we analyzed, you only need to modify **three specific blocks** to fix this issue.
+By disabling the task and write tools, we force the AI to stop delegating to child agents and output the text directly for our script to capture.
+Here are the **only three changes** you need to make to your current script:
+### Change 1: Update mcpConfig (Around Line 120)
+Replace your current mcpConfig with this one. This injects a custom architect agent and explicitly amputates its ability to call subagents (task) or write files.
+```javascript
+        // 3b. Dynamically inject the MCP config, permissions, AND a Custom Agent
+        const mcpConfig = {
+            permission: {
+                "*": "allow" 
+            },
+            agent: {
+                "architect": {
+                    "mode": "primary",
+                    "description": "Deeply analyzes code to produce human-readable technical blueprints.",
+                    "prompt": "You are a Principal Systems Architect. Your audience is HUMAN software engineers. You must do the deep analysis yourself. You must use the 'depwire' MCP server tools to map the AST graph. Use your 'ls' tool and 'read' tool to inspect SQL scripts. Output the complete blueprint directly as your final text response.",
+                    "tools": {
+                        "task": false,        // CRITICAL: Erases the ability to call subagents
+                        "write": false,       // CRITICAL: Forces it to output text to our script
+                        "edit": false,
+                        "apply_patch": false,
+                        "bash": false
+                    }
+                }
+            },
+            mcp: {
+                depwire: {
+                    type: "local",
+                    command: process.platform === "win32"? ["depwire.cmd", "mcp"] : ["depwire", "mcp"],
+                    enabled: true
+                }
+            }
+        };
+
+```
+### Change 2: Update the prompt (Around Line 140)
+Replace your current prompt variable. We must remove the instructions telling it to use the write tool, otherwise the AI will get confused when it cannot find the tool in its schema.
+```javascript
+        // 3c. Update prompt: Explicitly instruct our new custom agent
+        const prompt = `Analyze the requirement for Jira ticket ${jiraKey}. Step 1: Read the requirement details and OMR description from '${reqFile}'. Step 2: Use the local 'depwire' MCP server tools to trace the current dependency graph. Focus on identifying core application entry points, business logic handlers, and data persistence models. Step 3: Database Script Analysis. Use your native 'ls' tool recursively from the project root to locate the 'hubs' directory and find the.sql scripts located in the 'hubs/*/sql' directories. Use your 'read' tool to inspect them. Step 4: Output the complete, human-readable markdown blueprint detailing the exact source files to be modified and the SQL changes required directly as your final text response in the console.`;
+
+```
+### Change 3: Update the spawn Array (Around Line 150)
+Replace your spawn block to change the --agent flag from plan to our new custom architect agent. Keep your existing OPENCODE_DISABLE_DEFAULT_PLUGINS typo fix exactly as you have it.
+```javascript
+        // 3d. Invoke OpenCode CLI headlessly using our custom 'architect' agent
+        const repoRoot = process.cwd(); 
+        const opencodeCmd = 'opencode'; 
+        
+        writeLog(`[${jiraKey}] Launching OpenCode agent with directory set to project root: ${repoRoot}`);
+        
+        const agent = spawn(opencodeCmd,, { 
+            windowsHide: true,
+            shell: true, 
+            env: {
+             ...process.env,
+                OPENCODE_CONFIG_CONTENT: JSON.stringify(mcpConfig),
+                OPENCODE_DISABLE_MODELS_FETCH: 'true',
+                OPENCODE_DISABLE_DEFAULT_PLUGINS: 'true'
+            }
+        });
+
+```
+That is it. You do not need to change the logging, the Jira fetching, or the stdout file-writing loop at the bottom. These three surgical changes will force the 120b model to analyze the codebase itself and output a human-readable document.
+__----_------+
+        
+        
+        
+        
         // 3c. Construct the prompt as a SINGLE continuous line for Windows CMD
         const prompt = `You are an Enterprise Systems Architect. Your task is to analyze the requirement for Jira ticket ${jiraKey} and generate a comprehensive blueprint of required code changes. Step 1: Read the requirement details and OMR description from '${reqFile}'. Step 2: Use the local 'depwire' MCP server tools to trace the current dependency graph. Focus on identifying core application entry points, business logic handlers, and data persistence models. Rely strictly on Depwire's deterministic AST graph. Step 3: Use your native 'glob' and 'read' tools to locate and inspect any.sql scripts specifically located within the 'hubs/*/sql' directories. Cross-reference these SQL files with the application's data access layer. Step 4: Generate a detailed, layer-by-layer markdown blueprint detailing the exact source files to be modified, the SQL changes required, and a structural impact analysis. Output the final blueprint using your 'write' tool to the file '${outputFile}'.`;
 
