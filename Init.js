@@ -53,3 +53,12 @@ try {
     writeLog(`❌ Failed to run 'opencode init':`, error);
     process.exit(1);
 }
+
+        // 3c. The optimized, deterministic prompt
+        const prompt = `You are a Principal Systems Architect. Your audience is HUMAN software engineers. You must do the deep analysis yourself. DO NOT delegate.
+
+Step 1: Use your Jira MCP tools to fetch ticket ${jiraKey}. Extract the standard description and 'customfield_14724' (OMR Description) to fully understand the goal.
+Step 2: Do NOT blindly harvest or guess files. Use the 'depwire_get_architecture_summary' and 'depwire_get_file_context' MCP tools to map the entry points, business logic, and data persistence models deterministically. If you propose modifying a symbol, use 'depwire_impact_analysis' to find its exact blast radius and downstream consumers.
+Step 3: Database Script Analysis. Use the native 'ls' tool recursively to locate the 'hubs' directory and find.sql scripts inside 'hubs/*/sql'. Use the 'read' tool to inspect them.
+Step 4: Synthesize these deterministic facts into a highly detailed, human-readable Markdown blueprint detailing the exact source files to be modified and the structural impact. Output the complete blueprint directly as your final text response in the console.`;
+
