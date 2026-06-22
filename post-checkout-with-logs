@@ -16,6 +16,56 @@ function writeLog(message) {
         // Failsafe to ensure logging failures don't crash the pipeline
     }
 }
+const { execSync } = require('child_process');
+
+function safelyTerminateZombieNodes() {
+  const currentPid = String(process.pid); // 🛡️ Get YOUR active script's process ID
+  console.log(`ℹ️ Current Active Process ID: ${currentPid}`);
+  console.log("🔍 Scanning for orphaned background Node processes...");
+  
+  try {
+    // Fetch the Command Line execution string and Process ID of all node tasks
+    const rawOutput = execSync('wmic process where "name=\'node.exe\'" get CommandLine,ProcessId /FORMAT:CSV', { encoding: 'utf-8' });
+    const lines = rawOutput.trim().split('\r\n');
+    const zombiesToKill = [];
+
+    lines.forEach(line => {
+      // CSV format layout: ComputerName,CommandLine,ProcessId
+      if (line && (line.includes('opencode') || line.includes('depwire') || line.includes('mcp-server') || line.includes('@modelcontextprotocol'))) {
+        const parts = line.split(',');
+        const pid = parts[parts.length - 1].trim(); 
+        const cmdLine = parts.slice(1, parts.length - 1).join(',').replace(/"/g, '');
+
+        // 🛡️ CRITICAL EXCLUSION: Never target yourself or you'll drop the execution mid-flight
+        if (pid && pid !== currentPid) {
+          zombiesToKill.push({ pid, command: cmdLine });
+        }
+      }
+    });
+
+    if (zombiesToKill.length > 0) {
+      console.log(`⚠️ Detected ${zombiesToKill.length} orphaned background OpenCode/MCP sub-processes. Terminating safely...`);
+      
+      zombiesToKill.forEach(zombie => {
+        try {
+          // Surgically execute taskkill ONLY on the leaked sub-processes
+          execSync(`taskkill /F /PID ${zombie.pid}`, { stdio: 'ignore' });
+          console.log(`  └── 💥 Terminated Zombie PID ${zombie.pid} -> ${zombie.command.substring(0, 60)}...`);
+        } catch (e) {
+          // Handle cases where a process died naturally between the scan and the kill command
+        }
+      });
+      console.log("✨ All resource-locking zombie nodes cleared.");
+    } else {
+      console.log("✅ Clear: No leaked resource locks detected.");
+    }
+  } catch (error) {
+    console.log("✅ Clear: No matching background node processes detected.");
+  }
+}
+
+// Run the safe cleanup gate right before spawning your main OpenCode workflow
+safelyTerminateZombieNodes();
 
 // 1. Check if this is a branch switch (1) or a single file checkout (0)
 const isBranchSwitch = process.argv[4] === '1';
