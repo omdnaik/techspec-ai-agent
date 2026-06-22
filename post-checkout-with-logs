@@ -22,7 +22,16 @@ const isBranchSwitch = process.argv[4] === '1';
 if (!isBranchSwitch && process.argv[2] !== 'run-analysis') {
     process.exit(0);
 }
-
+// 🧹 CRITICAL FIX: The MCP Janitor Phase
+// Forcefully clear out any leaked zombie processes from previous crashes/runs
+console.log("🧹 Clearing lingering background MCP channels...");
+try {
+  // We use taskkill. Ignore errors if no matching zombie processes exist
+  execSync('taskkill /F /IM depwire.exe 2>nul', { stdio: 'ignore' });
+  execSync('taskkill /F /IM depwire-cli.exe 2>nul', { stdio: 'ignore' });
+} catch (e) {
+  // Silent catch
+}
 // 2. Synchronous Idempotency Check
 if (process.argv[2] !== 'run-analysis') {
     try {
