@@ -17,3 +17,34 @@
     }
   }
 }
+
+
+
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["configuration_impacts"],
+  "properties": {
+    "configuration_impacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file_path", "file_type", "extracted_context"],
+        "properties": {
+          "file_path": { 
+            "type": "string", 
+            "description": "e.g., src/main/resources/db/migration/V1_2__add_tax_columns.sql" 
+          },
+          "file_type": { 
+            "type": "string", 
+            "enum": ["YAML", "PROPERTIES", "SQL", "XML"] 
+          },
+          "extracted_context": { 
+            "type": "string", 
+            "description": "The exact matched property key, OR the full raw SQL block (e.g., the complete ALTER TABLE statement) so the reporter can analyze the schema impact." 
+          }
+        }
+      }
+    }
+  }
+}
