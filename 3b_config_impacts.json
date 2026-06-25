@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["configuration_impacts"],
+  "properties": {
+    "configuration_impacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file_path", "file_type", "matched_property_or_query"],
+        "properties": {
+          "file_path": { "type": "string", "description": "e.g., src/main/resources/application.yml" },
+          "file_type": { "type": "string", "enum": ["YAML", "PROPERTIES", "SQL", "XML"] },
+          "matched_property_or_query": { "type": "string", "description": "The exact line or property key found." }
+        }
+      }
+    }
+  }
+}
