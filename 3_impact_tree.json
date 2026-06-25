@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["entry_point_mappings"],
+  "properties": {
+    "entry_point_mappings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source_class", "upstream_impacts", "downstream_impacts"],
+        "properties": {
+          "source_class": {
+            "type": "string",
+            "description": "The class name taken directly from 2_technical_entry_points.json."
+          },
+          "upstream_impacts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["caller_class", "method_invoked", "relationship_type"],
+              "properties": {
+                "caller_class": { "type": "string" },
+                "method_invoked": { "type": "string" },
+                "relationship_type": { 
+                  "type": "string",
+                  "enum": ["REST_CALL", "METHOD_INVOCATION", "EVENT_LISTENER", "INTERFACE_IMPLEMENTATION"]
+                }
+              }
+            },
+            "description": "Classes that call the source class (e.g., Controllers calling a Service)."
+          },
+          "downstream_impacts": {
+            "type": "array",
+            "items": {
+               "type": "object",
+               "required": ["callee_class", "relationship_type"],
+               "properties": {
+                 "callee_class": { "type": "string" },
+                 "relationship_type": { "type": "string", "enum": ["DB_QUERY", "METHOD_INVOCATION", "EXTERNAL_API"] }
+               }
+            },
+            "description": "Classes or databases called by the source class (e.g., a Service calling a Repository)."
+          }
+        }
+      }
+    }
+  }
+}
