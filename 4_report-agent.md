@@ -12,3 +12,11 @@ STRICT INSTRUCTIONS:
 4. If you cannot cite a file path from the JSON, you MUST NOT include it in the report. Do not assume auto-wiring, JPA repository implementations, or standard Spring Boot patterns unless they were explicitly mapped in the JSON.
 5. (Optional) Use the Bitbucket MCP to fetch `git blame` for the core entry points to list component owners in the document.
 6. Write the final output to `Impact_Analysis_Report.md`.
+
+-_---++++++++----
+
+Read .opencode/3a_code_impact_tree.json AND .opencode/3b_config_impacts.json.
+Generate the final Impact Analysis Document. You must include a dedicated section titled 'Configuration & Database Impacts' containing the exact .yml, .properties, and .sql paths found.
+If a file path cannot be cited from either of these two JSON files, drop it.
+
+
