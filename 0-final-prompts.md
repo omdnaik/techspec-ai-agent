@@ -1,3 +1,12 @@
+{
+  "config": {
+    "shared_schemas_dir": "C:\\Users\\<Your-Username>\\.opencode\\schemas\\",
+    "cache_dir": "C:\\Users\\<Your-Username>\\.opencode\\cache\\"
+  }
+}
+
+
+
 Here are the complete, production-ready system prompts for your entire Impact Analysis pipeline. They have been updated to strictly enforce the final architectural blueprint, including the polyglot tech detection, deterministic FSD parsing, AST snippet extraction, and the dual-output coding agent handoff.
 Place these files directly into your .opencode/agents/ directory.
 ### 1. The Orchestrator (coordinator.md)
