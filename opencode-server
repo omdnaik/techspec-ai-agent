@@ -72,3 +72,62 @@ startOpenCodeServer(repo, mcpConfig);
 sendAgentTask("Refactor the authorization validation middleware pipeline.", repo);
 
 
+
+
+
+import { spawn } from 'child_process';
+import { promisify } from 'util';
+
+const sleep = promisify(setTimeout);
+let serverProcessRef = null; // Global pointer to store the child process instance
+
+function startOpenCodeServer(repoRoot, mcpConfig) {
+  const args = ['serve', '--port', '4096', '--hostname', '127.0.0.1'];
+
+  // REMOVE detached: true and unref() so Node keeps tabs on the process lifespan lifecycle natively
+  serverProcessRef = spawn('opencode', args, {
+    stdio: 'ignore',
+    env: {
+      ...process.env,
+      OPENCODE_CONFIG_CONTENT: JSON.stringify(mcpConfig),
+      OPENCODE_DISABLE_MODELS_FETCH: 'true',
+      OPENCODE_DISABLE_DEFAULT_PLUGINS: 'true'
+    }
+  });
+
+  console.log(`OpenCode background server spawned with PID: ${serverProcessRef.pid}`);
+}
+
+/**
+ * Cleanly destroys the running background server instance
+ */
+function destroyOpenCodeServer() {
+  if (serverProcessRef && !serverProcessRef.killed) {
+    console.log(`Sending SIGTERM to destroy OpenCode server (PID: ${serverProcessRef.pid})...`);
+    
+    // Sends a graceful kill flag signal to clean up the workspace lock files
+    serverProcessRef.kill('SIGTERM'); 
+  }
+}
+
+// Complete Script Life Cycle Example:
+async function main() {
+  const repo = '/path/to/project';
+  
+  // 1. Boot up
+  startOpenCodeServer(repo, {});
+  await sleep(1500); 
+
+  // 2. Execute agent reasoning
+  await sendAgentTask("Fix the auth validation middleware.", repo);
+
+  // 3. Destroy explicitly when your task operations finish
+  destroyOpenCodeServer();
+}
+
+// Safety catch: If your main node script crashes unexpectedly, ensure it doesn't leave a ghost process
+process.on('SIGINT', () => { destroyOpenCodeServer(); process.exit(0); });
+process.on('exit', () => { destroyOpenCodeServer(); });
+
+main();
+
