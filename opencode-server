@@ -1,0 +1,74 @@
+import { spawn } from 'child_process';
+import { promisify } from 'util';
+
+const sleep = promisify(setTimeout);
+
+/**
+ * Boots the OpenCode daemon in headless server mode.
+ */
+function startOpenCodeServer(repoRoot, mcpConfig) {
+  const args = [
+    'serve',
+    '--port', '4096',
+    '--hostname', '127.0.0.1'
+  ];
+
+  const server = spawn('opencode', args, {
+    detached: true, // Allows the server to live independently
+    stdio: 'ignore', // No terminal stream dependencies required
+    env: {
+      ...process.env,
+      OPENCODE_CONFIG_CONTENT: JSON.stringify(mcpConfig),
+      OPENCODE_DISABLE_MODELS_FETCH: 'true',
+      OPENCODE_DISABLE_DEFAULT_PLUGINS: 'true'
+    }
+  });
+
+  server.unref(); // Lets your main Node script exit without killing the server
+  console.log('OpenCode background server initialized on port 4096.');
+}
+
+/**
+ * Sends a task to the persistent background agent session.
+ */
+async function sendAgentTask(promptText, repoRoot) {
+  // Wait briefly for server startup check if running sequentially
+  await sleep(1500); 
+
+  const payload = {
+    model: 'ollama/qwen3-coder-next',
+    agent: 'architect',
+    directory: repoRoot,
+    messages: [
+      { role: 'user', content: promptText }
+    ],
+    // Forces the server to use stateful context caching pipelines
+    stream: false 
+  };
+
+  try {
+    const response = await fetch('http://127.0.0', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    
+    // Log out the precise, high-quality generated response
+    console.log('Agent Response:', data.choices[0].message.content);
+    return data.choices[0].message.content;
+
+  } catch (error) {
+    console.error('Failed communicating with OpenCode Server:', error);
+  }
+}
+
+// Execution Blueprint:
+const mcpConfig = { tools: [] }; // Your configuration object
+const repo = '/path/to/your/project';
+
+startOpenCodeServer(repo, mcpConfig);
+sendAgentTask("Refactor the authorization validation middleware pipeline.", repo);
+
+
