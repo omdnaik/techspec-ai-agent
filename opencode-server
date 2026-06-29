@@ -131,3 +131,25 @@ process.on('exit', () => { destroyOpenCodeServer(); });
 
 main();
 
+
+metadata: {
+      shared: {
+        session: { id: `jira-${jiraTicket.key.toLowerCase()}` } // Restores stateful caching hooks
+      }
+    }
+
+const response = await fetch(url, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Server returned HTTP ${response.status}: ${errorText}`);
+    }
+
+
