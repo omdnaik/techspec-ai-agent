@@ -1,0 +1,222 @@
+I would not ask Codex to "update the documents." That is too broad and it will almost certainly make unrelated changes.
+
+Instead, give it a very targeted document refactoring task.
+
+
+---
+
+# Task
+
+Refactor the project documentation to align with the latest architecture decisions.
+
+This is a documentation-only task.
+
+Do NOT modify any Ansible roles, playbooks, tests or source code.
+
+---
+
+## Architecture decisions
+
+The following architecture decisions are APPROVED and SHALL be reflected consistently across all implementation documents.
+
+### 1. Remove Execution Context Contract
+
+Execution Context Contract is no longer part of the architecture.
+
+Remove all references to:
+
+- Execution Context Contract
+- Execution Context object
+
+Wherever it appears.
+
+---
+
+### 2. Remove Role Result Contract
+
+Role Result Contract is no longer part of the architecture.
+
+Lifecycle roles SHALL update Artifact Metadata directly.
+
+Reporting Framework SHALL consume Artifact Metadata.
+
+Remove all references to:
+
+- Role Result Contract
+- Role Result object
+
+---
+
+### 3. Artifact Metadata becomes the canonical runtime contract
+
+Artifact Metadata is the single runtime object used throughout execution.
+
+Every lifecycle role SHALL:
+
+- read Artifact Metadata
+- update runtime fields
+- never modify Manifest
+
+Reporting Framework SHALL consume Artifact Metadata.
+
+Checkpoint Manager SHALL persist Artifact Metadata execution state.
+
+Notification Framework SHALL consume Artifact Metadata or generated reports.
+
+---
+
+### 4. Approved execution flow
+
+Replace every outdated execution flow with:
+
+Manifest
+    ↓
+Manifest Validation
+    ↓
+Environment Resolver
+    ↓
+Artifact Metadata Builder
+    ↓
+Artifact Metadata
+    ↓
+Lifecycle Roles
+    ↓
+Checkpoint Manager
+    ↓
+Reporting Framework
+    ↓
+Notification Framework
+
+---
+
+### 5. Manifest is immutable
+
+The Manifest SHALL never be modified after validation.
+
+Runtime state SHALL exist only inside Artifact Metadata.
+
+---
+
+### 6. Environment Resolver
+
+Environment Resolver is responsible for:
+
+- loading environment template
+- resolving Jinja2 variables
+- producing resolved environment configuration
+
+It SHALL execute before Artifact Metadata Builder.
+
+---
+
+### 7. Artifact Metadata Builder
+
+Consumes:
+
+- Validated Manifest
+- Resolved Environment Configuration
+
+Produces:
+
+- Artifact Metadata
+
+One Artifact Metadata object SHALL be created for every artifact.
+
+---
+
+## Documents to update
+
+Update only documentation.
+
+Expected documents include:
+
+- Technical Specification
+- Volume 2 – Execution Framework
+- Volume 6 – Jira Mapping
+- Volume 7 – Architecture Diagrams
+- 10-Data-Contracts.md
+- ADR documents
+- Any design documents referencing Execution Context or Role Result Contract
+
+---
+
+## Required updates
+
+Update:
+
+- architecture diagrams
+- sequence diagrams
+- Mermaid diagrams
+- dependency diagrams
+- data flow diagrams
+- interaction diagrams
+- lifecycle descriptions
+- component responsibilities
+- ADRs
+- contract dependency tables
+
+---
+
+## Do NOT
+
+Do not create new implementation.
+
+Do not modify any code.
+
+Do not modify any playbooks.
+
+Do not modify tests.
+
+Do not modify Molecule.
+
+---
+
+## Deliverables
+
+For every modified document provide:
+
+1. Summary of changes
+
+2. Sections modified
+
+3. Reason for modification
+
+4. Any remaining inconsistencies discovered
+
+5. Recommended follow-up documentation changes
+
+---
+
+Before making changes, first identify every document affected by these architecture decisions and explain why each document requires modification.
+Only after that, update the documentation.
+
+I would add one more task
+
+Since your project has grown significantly, I'd also ask Codex to perform a consistency audit after updating the documents.
+
+Append this to the prompt:
+
+## Documentation Consistency Audit
+
+After completing the updates, perform a repository-wide documentation audit.
+
+Verify that:
+
+- Execution Context Contract no longer exists anywhere.
+- Role Result Contract no longer exists anywhere.
+- Every execution flow is identical.
+- Every Mermaid diagram reflects the approved architecture.
+- Every Jira dependency is consistent.
+- Every contract dependency is consistent.
+- Every document uses the same terminology for:
+    - Manifest
+    - Environment Resolver
+    - Artifact Metadata Builder
+    - Artifact Metadata
+    - Checkpoint Manager
+    - Reporting Framework
+    - Notification Framework
+
+Produce a final consistency report listing any remaining documentation inconsistencies.
+
+I think this extra audit is worthwhile because you've now accumulated PRD + Technical Specification + 7 implementation volumes + Data Contracts + ADRs. It's easy for one or two documents to retain outdated terminology, and a dedicated consistency pass will help keep the entire documentation set coherent before more implementation begins.
