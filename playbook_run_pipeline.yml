@@ -1,0 +1,36 @@
+---
+# playbooks/execution/execute_artifact.yml
+
+- name: Execute single artifact
+  hosts: "{{ target_hosts }}"
+  gather_facts: false
+
+  tasks:
+
+    - name: Cleanup
+      ansible.builtin.include_role:
+        name: cleanup
+
+    - name: Precheck
+      ansible.builtin.include_role:
+        name: precheck
+
+    - name: Deploy
+      ansible.builtin.include_role:
+        name: deploy
+
+    - name: Sanity
+      ansible.builtin.include_role:
+        name: sanity
+
+    - name: Execute regression
+      ansible.builtin.include_role:
+        name: execute
+
+    - name: Validate
+      ansible.builtin.include_role:
+        name: validate
+
+    - name: Housekeeping
+      ansible.builtin.include_role:
+        name: housekeeping
