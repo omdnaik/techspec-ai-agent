@@ -1,0 +1,28 @@
+---
+- name: Orchestrate Parallel Multi-App Deployments
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Trigger independent deployment jobs across all hosts
+      ansible.controller.job_launch:
+        # EXACT name of your deployment Job Template in AAP
+        job_template: "App_Deployment_Execution_Template" 
+        
+        # Fire and forget - do not wait for the job to finish
+        wait: false 
+        
+        # Pass the dynamic routing variables to the downstream job
+        extra_vars:
+          target_servers: "{{ item.0.target_host }}"
+          current_artifact: "{{ item.1 }}"
+          
+      # Flatten your matrix array to loop through every Host + App combination
+      with_subelements:
+        - "{{ deployment_matrix }}"
+        - apps_to_deploy
+        
+      # Asynchronous execution to trigger them all simultaneously
+      async: 60
+      poll: 0
