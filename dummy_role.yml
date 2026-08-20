@@ -1,0 +1,16 @@
+---
+# playbooks/execution/execute_artifact.yml
+
+- name: Show artifact start
+  ansible.builtin.debug:
+    msg: >-
+      START {{ artifact_metadata.artifact_name }}
+
+- name: Simulate artifact execution
+  ansible.builtin.command:
+    cmd: "sleep 30"
+
+- name: Show artifact completion
+  ansible.builtin.debug:
+    msg: >-
+      END {{ artifact_metadata.artifact_name }}
