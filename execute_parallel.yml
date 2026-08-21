@@ -26,3 +26,51 @@
       # Asynchronous execution to trigger them all simultaneously
       async: 60
       poll: 0
+
+
+---
+- name: Orchestrate Parallel Multi-App Deployments
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    # =======================================================
+    # STEP 1: Fire all jobs into the background
+    # =======================================================
+    - name: Trigger parallel deployment jobs for every host and artifact
+      ansible.controller.job_launch:
+        job_template: "App_Deployment_Execution_Template" 
+        
+        # CHANGED: Tell the module to wait for the AWX job to finish
+        wait: true 
+        extra_vars:
+          target_servers: "{{ item.0.target_host }}"
+          current_artifact: "{{ item.1 }}"
+          
+      with_subelements:
+        - "{{ deployment_matrix }}"
+        - apps_to_deploy
+        
+      # The magic: push the waiting process into the background
+      async: 3600  # Max time you allow a deployment to run (1 hour)
+      poll: 0      # Move to the next loop item immediately
+      register: spawned_jobs
+
+    # =======================================================
+    # STEP 2: Monitor the background jobs for success/failure
+    # =======================================================
+    - name: Wait for all parallel deployments to complete
+      ansible.builtin.async_status:
+        # Check the Ansible background job ID created in Step 1
+        jid: "{{ item.ansible_job_id }}"
+      loop: "{{ spawned_jobs.results }}"
+      register: job_results
+      
+      # Keep looping until all background jobs report they are finished
+      until: job_results.finished
+      retries: 300   # Number of times to check 
+      delay: 10      # Wait 10 seconds between each check
+
+
+      
