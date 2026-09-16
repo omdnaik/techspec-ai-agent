@@ -1,0 +1,49 @@
+graph LR
+    %% Visual Styling
+    classDef enterprise fill:#0f4c81,stroke:#0f4c81,stroke-width:2px,color:#fff;
+    classDef ai fill:#009e73,stroke:#009e73,stroke-width:2px,color:#fff;
+    classDef dev fill:#e69f00,stroke:#e69f00,stroke-width:2px,color:#fff,color:#000;
+    classDef boundary fill:#f8f9fa,stroke:#d3d3d3,stroke-width:2px,stroke-dasharray: 5 5;
+
+    subgraph "BNP Paribas Secure Enterprise Perimeter"
+        direction TB
+
+        subgraph "1. Developer Workspace"
+            IDE["💻 Developer IDE<br/>(Open Code / Roo Code)"]:::dev
+            CLI["⚙️ Open Code CLI"]:::dev
+        end
+
+        subgraph "2. AI & Context Engine"
+            Orchestrator["🤖 AI Orchestrator<br/>(Node.js Script)"]:::ai
+            GraphRAG["🕸️ GraphRAG & DepthWire<br/>(Code Harvesting)"]:::ai
+            UnitTesting["🧪 Unit Test Engine<br/>(Design & Generate)"]:::ai
+            TechSpecGen["📝 Tech Spec Generator<br/>(Living Docs)"]:::ai
+        end
+
+        subgraph "3. Enterprise Systems"
+            Jira["🎫 Jira MCP<br/>(Requirements)"]:::enterprise
+            Bitbucket["🗄️ Bitbucket<br/>(Source Code & PRs)"]:::enterprise
+            DevOps["⚙️ DevOps Platform<br/>(Review Bot)"]:::enterprise
+            Docs["📄 Tech Spec<br/>(Master Wiki)"]:::enterprise
+        end
+
+        %% Analysis Flow
+        Jira -. "Context" .-> Orchestrator
+        GraphRAG -. "Dependency Graph" .-> Orchestrator
+        Bitbucket --> GraphRAG
+        CLI -->|"Git post-checkout hook"| Orchestrator
+        Orchestrator -->|"Generates Runbook"| IDE
+
+        %% Unit Testing Flow
+        IDE -->|"Roo Code Slash Command"| UnitTesting
+        UnitTesting -. "Requires Approval" .-> IDE
+
+        %% Code Review Flow
+        IDE -->|"Commits Code / Creates PR"| Bitbucket
+        Bitbucket -->|"Triggers Webhook"| DevOps
+        DevOps -->|"Automated Code Review"| Bitbucket
+        
+        %% Tech Spec Generation Flow
+        Bitbucket -->|"Master Branch Merge"| TechSpecGen
+        TechSpecGen -->|"Auto-updates Document"| Docs
+    end
